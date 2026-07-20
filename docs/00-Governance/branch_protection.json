@@ -1,0 +1,47 @@
+{
+  "_comment": [
+    "This file is the canonical, version-controlled record of the branch-protection",
+    "rule applied to the 'main' branch of github.com/GanTechProject/VinayakFortune.",
+    "Re-applying: gh api -X PUT repos/GanTechProject/VinayakFortune/branches/main/protection --input branch_protection.json",
+    "Reading:    gh api repos/GanTechProject/VinayakFortune/branches/main/protection",
+    "If the fields below change, update both this file and the rule on GitHub.",
+    "",
+    "POLICY NOTE: This repo is single-human (GanTechProject). GitHub's review model",
+    "blocks self-approval of one's own PR, so the 'require pull request review' rule",
+    "is set to 1 approval, which physically prevents the owner from merging their own",
+    "PRs through the GitHub UI / API. The merge button is intentionally blocked:",
+    "either a second human with write access must approve, or the merge must be",
+    "performed via a method that bypasses the review rule (currently impossible",
+    "on the classic branch-protection API).",
+    "",
+    "When a second human joins, the rule already requires 1 approval -- no edit",
+    "needed. If migration to GitHub Repository Rulesets is desired (a separate API",
+    "that decouples 'PR required' from 'PR review required'), the ruleset endpoint",
+    "supports the finer-grained control.",
+    "",
+    "API gotcha: setting required_pull_request_reviews to null on this endpoint",
+    "disables BOTH the 'require PR' and 'require review' rules; they are not",
+    "independently toggleable on the classic branch-protection API. Do not null",
+    "this field unless you intend to remove the PR requirement entirely."
+  ],
+  "required_status_checks": {
+    "strict": true,
+    "contexts": []
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": {
+    "dismiss_stale_reviews": true,
+    "require_code_owner_reviews": false,
+    "required_approving_review_count": 1,
+    "require_last_push_approval": false
+  },
+  "restrictions": null,
+  "required_linear_history": false,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "block_creations": false,
+  "required_conversation_resolution": true,
+  "lock_branch": false,
+  "allow_fork_syncing": false
+}
+
