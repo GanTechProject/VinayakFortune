@@ -1,6 +1,6 @@
 ---
 title: VentureMiner AI — AI Venture Intelligence Platform
-version: v1.0
+version: v1.1
 date: 2026-07-20
 author: VentureMiner AI Documentation Team
 status: Approved
@@ -8,9 +8,14 @@ status: Approved
 
 # VentureMiner AI
 
+> **Project name:** VentureMiner AI — AI Venture Intelligence Platform
+> **Repository name:** `VinayakFortune` (the GitHub URL slug — a legacy / umbrella identifier; the project itself is **VentureMiner AI**)
+> **Suite version:** v1.0
+> **Last updated:** 2026-07-20
+
 > **AI Venture Intelligence Platform** — turn market signals into validated, monetizable SaaS opportunities in hours, not quarters.
 
-This repository contains the **complete documentation suite** for VentureMiner AI. Every document is versioned, cross-referenced, and conformant with the governance rules in `docs/00-Governance/00_documentation_governance.md`.
+This repository contains the **complete documentation suite** for **VentureMiner AI**, hosted under the GitHub repository name **`VinayakFortune`**. The two names refer to the same project: `VinayakFortune` is the URL / repo slug, and **VentureMiner AI** is the product. Every document, code module, and artifact in this repo identifies the project as **VentureMiner AI**.
 
 ## Quick links
 
@@ -18,6 +23,12 @@ This repository contains the **complete documentation suite** for VentureMiner A
 - 📄 **PDF bundle:** [`docs/pdfs/`](docs/pdfs/) — 38 generated PDFs, ready to share
 - 📋 **Manifest:** [`docs/manifest.json`](docs/manifest.json) — machine-readable metadata for every document
 - 💬 **Project history:** [`ChatHistory.txt`](ChatHistory.txt) — the source conversation that defined this project
+
+## Repository naming
+
+- **Repository URL:** `github.com/GanTechProject/VinayakFortune`
+- **Project / product name:** **VentureMiner AI**
+- **Rationale:** the GitHub repository is named after the host organization / umbrella; the project itself is **VentureMiner AI**. All internal artifacts — every document, code module, and report — refer to the project as **VentureMiner AI**. When in doubt: the project name is the source of truth, the repository name is the URL slug.
 
 ## What is VentureMiner AI?
 
@@ -86,3 +97,10 @@ This repository is currently the **specification phase** of the project. No appl
 ## Compliance
 
 All documents in this suite conform to the rules in `docs/00-Governance/00_documentation_governance.md`. See `docs/README.md` for the compliance checklist.
+
+## Revision history
+
+| Version | Date | Author | Summary |
+|---|---|---|---|
+| v1.0 | 2026-07-20 | Doc Team | Initial 38-doc suite (Markdown + PDF), pushed to `GanTechProject/VinayakFortune`. |
+| v1.1 | 2026-07-20 | Doc Team | Clarified repository vs. project naming: repo is `VinayakFortune`, project is **VentureMiner AI**. |
