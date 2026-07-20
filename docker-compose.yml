@@ -1,0 +1,13 @@
+services:
+  hello-world:
+    build:
+      context: ./services/hello-world
+    ports:
+      - "8000:8000"
+    environment:
+      - LOG_LEVEL=info
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/healthz').raise_for_status()"]
+      interval: 30s
+      timeout: 3s
+      retries: 3

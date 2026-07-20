@@ -1,6 +1,6 @@
 ---
 title: VentureMiner AI — AI Venture Intelligence Platform
-version: v1.1
+version: v1.2
 date: 2026-07-20
 author: VentureMiner AI Documentation Team
 status: Approved
@@ -52,6 +52,21 @@ The full product vision, requirements, and architecture are specified in the 38-
 ProjectSAAS/
 ├── README.md                       # This file
 ├── ChatHistory.txt                 # Source conversation
+├── Makefile                        # top-level targets (make smoke, make lint, ...)
+├── docker-compose.yml              # local dev stack
+├── services/
+│   └── hello-world/                # sample FastAPI service (AC-1.1)
+│       ├── app/                    # main.py + test_main.py
+│       ├── Dockerfile
+│       ├── pyproject.toml
+│       ├── requirements.txt
+│       └── README.md
+├── web/                            # Next.js app (lands in #16)
+├── ai-plane/                       # AI services (lands in #6-#10)
+├── infra/                          # Terraform / IaC (operator-side, #4)
+├── .github/workflows/
+│   ├── ci-hello-world.yml          # required status check
+│   └── docs-lint.yml               # docs structure lint
 └── docs/
     ├── README.md                   # Documentation index
     ├── 00-Governance/              # Document 00
@@ -92,7 +107,16 @@ Dependencies: `reportlab>=5.0`, `markdown>=3.5`.
 
 ## Status
 
-This repository is currently the **specification phase** of the project. No application code has been committed yet. The implementation roadmap in `docs/06-Roadmap/06_implementation_roadmap.md` defines the work that will follow.
+This repository is currently in the **pre-implementation → foundations** transition. The 38-document spec suite (v1.2) is the contract; the **foundations monorepo** (services/hello-world, web/, ai-plane/, infra/, .github/workflows/) is now scaffolded as the entry point for the [issue ledger](https://github.com/GanTechProject/VinayakFortune/issues) (17 issues filed, 115/115 REQ-* IDs cited downstream per the corrected PRD §15.3 traceability matrix). The implementation roadmap in `docs/06-Roadmap/06_implementation_roadmap.md` defines the work that follows.
+
+### Quick start
+
+```bash
+make hello-world-test    # RED-first unit tests for the sample service
+make lint                # ruff on services/hello-world
+make smoke               # test + lint + Docker build
+make hello-world-run     # local on :8000
+```
 
 ## Compliance
 
@@ -104,3 +128,4 @@ All documents in this suite conform to the rules in `docs/00-Governance/00_docum
 |---|---|---|---|
 | v1.0 | 2026-07-20 | Doc Team | Initial 38-doc suite (Markdown + PDF), pushed to `GanTechProject/VinayakFortune`. |
 | v1.1 | 2026-07-20 | Doc Team | Clarified repository vs. project naming: repo is `VinayakFortune`, project is **VentureMiner AI**. |
+| v1.2 | 2026-07-20 | Doc Team | Foundations monorepo scaffold: `services/hello-world/` (FastAPI sample, AC-1.1), `web/`, `ai-plane/`, `infra/` placeholders, `Makefile`, `docker-compose.yml`, GitHub Actions workflows (`ci-hello-world`, `docs-lint`). Closes the local-buildable portion of [issue #4](https://github.com/GanTechProject/VinayakFortune/issues/4); the AWS-side ACs (1.3-1.16) remain for the operator-side follow-up. |
