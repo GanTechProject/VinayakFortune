@@ -126,11 +126,14 @@ python - <<'PY'
 import json, sys
 
 def normalize(o):
-    """Strip URL metadata, unwrap {'enabled': bool}, drop nulls and empty metadata lists."""
+    """Strip URL metadata, unwrap {'enabled': bool}, drop nulls, drop the
+    modern-API `checks` mirror (it's auto-populated from `contexts` and
+    always present in modern responses even when the file doesn't list it),
+    and drop `restrictions` (null in the file, omitted in the live API)."""
     if isinstance(o, dict):
         out = {}
         for k, v in o.items():
-            if k in ("url", "contexts_url", "html_url"):
+            if k in ("url", "contexts_url", "html_url", "restrictions"):
                 continue
             if v is None:
                 continue  # null == absent in the API
@@ -139,8 +142,9 @@ def normalize(o):
                 out[k] = v2["enabled"]
             else:
                 out[k] = v2
-        if out.get("required_status_checks", {}).get("checks") == []:
-            out["required_status_checks"].pop("checks", None)
+        # `checks` is the modern API's auto-populated mirror of `contexts`.
+        # Drop it on both sides so the comparison is policy-only.
+        out.get("required_status_checks", {}).pop("checks", None)
         return out
     if isinstance(o, list):
         return [normalize(v) for v in o if v is not None]
@@ -148,8 +152,7 @@ def normalize(o):
 
 pre = normalize(json.load(open("pre_protection.json")))
 post = normalize(json.load(open("post_protection.json")))
-# Drop keys the API may add to post but not to pre (e.g. required_signatures
-# gets included by default in modern API responses).
+# `required_signatures` is always present in modern API responses; drop on both.
 for k in ("required_signatures",):
     pre.pop(k, None)
     post.pop(k, None)
