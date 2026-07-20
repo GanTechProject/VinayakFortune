@@ -1,0 +1,57 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Node / web tooling
+node_modules/
+.next/
+out/
+.turbo/
+.parcel-cache/
+.eslintcache
+
+# Secrets / local config
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# OS temp
+$RECYCLE.BIN/
+
+# Build artifacts we explicitly DO NOT want to keep
+*.log
+*.tmp
+*.bak
