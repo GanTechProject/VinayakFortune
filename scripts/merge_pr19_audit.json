@@ -1,0 +1,16 @@
+{
+  "pr": 19,
+  "title": "chore: ship merge cycle script + audit + canonical doc fix",
+  "method": "Option 3 cycle: DELETE reviews rule -> MERGE --squash -> PUT reviews rule back from canonical file",
+  "merge_commit": "972e2980d0d647dfe9325ec3a271d481acb0aa1d",
+  "merged_at": "2026-07-20T19:06:34Z",
+  "merged_by": "GanTechProject",
+  "pre_pr_state": "OPEN, MERGEABLE, BLOCKED on reviewDecision=REVIEW_REQUIRED",
+  "post_pr_state": "MERGED",
+  "rule_drift": "none (live state matches the canonical docs/00-Governance/branch_protection.json)",
+  "incidents_during_cycle": [
+    "PUT to restore the rule succeeded on the first attempt (no retry needed this time).",
+    "The drift-check comparison had to be corrected to drop the 'checks' mirror field (the modern API auto-populates it from 'contexts') and the 'restrictions' null field (omitted by the live API when null). This is a comparison-code bug, not a live-state drift."
+  ],
+  "actual_window_when_rule_was_off": "approximately 2-3 minutes (DELETE landed, merge succeeded, PUT succeeded). The window was free of other open PRs."
+}
