@@ -1,0 +1,28 @@
+{
+  "_comment": [
+    "This file is the canonical, version-controlled record of the branch-protection",
+    "rule applied to the 'main' branch of github.com/GanTechProject/VinayakFortune.",
+    "Re-applying: gh api -X PUT repos/GanTechProject/VinayakFortune/branches/main/protection --input branch_protection.json",
+    "Reading:    gh api repos/GanTechProject/VinayakFortune/branches/main/protection",
+    "If the fields below change, update both this file and the rule on GitHub."
+  ],
+  "required_status_checks": {
+    "strict": true,
+    "contexts": []
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": {
+    "dismiss_stale_reviews": true,
+    "require_code_owner_reviews": false,
+    "required_approving_review_count": 1,
+    "require_last_push_approval": false
+  },
+  "restrictions": null,
+  "required_linear_history": false,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "block_creations": false,
+  "required_conversation_resolution": true,
+  "lock_branch": false,
+  "allow_fork_syncing": false
+}
