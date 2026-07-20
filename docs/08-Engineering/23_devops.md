@@ -1,6 +1,6 @@
 ---
 title: DevOps & Infrastructure
-version: v1.0
+version: v1.1
 date: 2026-07-20
 author: VentureMiner AI Documentation Team
 status: Approved
@@ -66,6 +66,18 @@ Each environment is in its own AWS account; cross-account access is least-privil
 - **Branch naming:** `<type>/<ticket>-<short-desc>` (e.g. `feat/VM-142-opportunity-bulk-actions`).
 - **Commits:** Conventional Commits.
 - **PRs:** small (< 400 lines), 2+ reviewers for sensitive areas, CODEOWNERS enforced.
+
+### 5.1 Repository policy (canonical reference)
+
+The canonical, version-controlled record of the `main` branch protection policy lives at `docs/00-Governance/branch_protection.json`. Operators and CI jobs that need to verify or re-apply the rule read that file, not the GitHub API directly. The current rule is:
+
+- 1 approving review required.
+- `enforce_admins: true` — admins are subject to the same rule.
+- No force-pushes, no deletions.
+- Conversation resolution required before merge.
+- Status checks: strict, with the project's CI suite providing the required contexts.
+
+> **Why a single-human repo is non-blocked by 1-approval review:** GitHub blocks self-approval of one's own PR for classic branch protection. The repository owner cannot merge a PR through the UI/API while the rule is in force; merging requires either a second human with write access to approve, or a temporary rule toggle by an admin (the same person). The canonical policy is therefore intentionally strict — the operational intent is "no self-merge by default." See `docs/00-Governance/branch_protection.json` for the policy comment block.
 
 ## 6. Build & artifact
 
@@ -142,6 +154,7 @@ PR → CI (lint, unit, integration, contract) → main → staging deploy → sm
 |---|---|---|---|
 | v0.5 | 2026-07-20 | Doc Team | All sections drafted |
 | v1.0 | 2026-07-20 | Doc Team | First approved version |
+| v1.1 | 2026-07-20 | Doc Team | §5.1 "Repository policy" subsection added, pointing operators to `docs/00-Governance/branch_protection.json` as the canonical record of the `main` branch protection rule. Closes M-3 from the drift report (branch policy was previously invisible to readers of this DevOps doc). |
 
 ### 14.2 Cross-references
 

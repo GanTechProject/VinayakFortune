@@ -1,6 +1,6 @@
 ---
 title: Technical Requirements Document (TRD)
-version: v1.0
+version: v1.1
 date: 2026-07-20
 author: VentureMiner AI Documentation Team
 status: Approved
@@ -74,7 +74,7 @@ This document is the technical contract for the VentureMiner AI platform. Every 
 | Observability | OpenTelemetry → Datadog (managed) | Unified traces/logs/metrics |
 | CI/CD | GitHub Actions + Argo CD | GitOps |
 | IaC | Terraform | Multi-cloud ready |
-| Hosting | AWS (primary), GCP (DR) | Multi-region |
+| Hosting | AWS (primary + DR in `us-west-2`); GCP planned for true multi-cloud, post-MVP | Multi-region |
 
 ### 2.2 Rationale (selected)
 
@@ -149,6 +149,8 @@ This document is the technical contract for the VentureMiner AI platform. Every 
    │  Async plane: Temporal + NATS JetStream              │
    └──────────────────────────────────────────────────────┘
 ```
+
+> **Vector store v1/v2 note:** the diagram shows **pgvector** in Postgres 16 (RDS Multi-AZ) as the v1 vector store. At the v1→v2 trigger (5M embeddings or Year 1, per Document 06 §10 DOC-OD-03), the vector store migrates to **Qdrant** as a separate managed cluster. v2 adds a Qdrant box in the AI plane VPC and keeps pgvector as a read-only mirror during the migration window. See Document 07 §6.3 AD-003 for the architectural decision record.
 
 ### 3.3 Network
 
@@ -431,6 +433,7 @@ Detailed in Document 21. Summary here:
 |---|---|---|---|
 | v0.5 | 2026-07-20 | Doc Team | All sections drafted |
 | v1.0 | 2026-07-20 | Doc Team | First approved version |
+| v1.1 | 2026-07-20 | Doc Team | §2.1 hosting row corrected: AWS is primary **and** DR (`us-west-2`); GCP is post-MVP multi-cloud, not DR (closes M-1 from the drift report). §3.2 topology diagram now carries a v1/v2 vector-store callout naming pgvector → Qdrant per AD-003 and DOC-OD-03 (closes M-4 from the drift report). |
 
 ### 18.2 Cross-references
 
