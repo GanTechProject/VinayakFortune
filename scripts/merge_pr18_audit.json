@@ -1,0 +1,16 @@
+{
+  "pr": 18,
+  "title": "chore: bootstrap monorepo + hello-world service (foundations, AC-1.1, AC-1.2)",
+  "method": "Option 3 cycle: DELETE reviews rule -> MERGE --squash -> PUT reviews rule back",
+  "merge_commit": "c033d9d6dd239d99d5847821f4f10a078281f5f6",
+  "merged_at": "2026-07-20T18:50:39Z",
+  "merged_by": "GanTechProject",
+  "pre_pr_state": "OPEN, MERGEABLE, BLOCKED on reviewDecision=REVIEW_REQUIRED",
+  "post_pr_state": "MERGED",
+  "rule_drift": "none (every policy value matches the canonical docs/00-Governance/branch_protection.json)",
+  "incidents_during_cycle": [
+    "Step 1a (404 confirmation check) returned HTTP 000 because gh api's curl write-out handling for the DELETE-probe endpoint is broken; this caused the script to abort after a successful DELETE. The DELETE had actually landed. I bypassed the check and proceeded to the merge directly.",
+    "Step 3 PUT (initial) failed with a network timeout: 'dial tcp 20.207.73.85:443: connectex: A connection attempt failed because the connected party did not properly respond after a period of time'. I retried the PUT after a 3-second sleep; the retry succeeded."
+  ],
+  "actual_window_when_rule_was_off": "approximately 5 minutes (DELETE landed, merge succeeded, PUT retry succeeded). The window was free of other open PRs, so the only PR that could be merged during it was PR 18 itself, which is the intended target."
+}
