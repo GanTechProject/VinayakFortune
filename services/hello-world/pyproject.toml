@@ -1,0 +1,32 @@
+[project]
+name = "hello-world"
+version = "0.1.0"
+description = "Sample service for the VentureMiner AI monorepo (AC-1.1)."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.115.0",
+    "uvicorn[standard]==0.32.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.3",
+    "httpx==0.27.2",
+    "ruff==0.7.4",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["app"]
+addopts = "-v --strict-markers"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
