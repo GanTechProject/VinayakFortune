@@ -1,6 +1,6 @@
 ---
 title: Documentation Governance
-version: v1.1
+version: v1.2
 date: 2026-07-20
 author: VentureMiner AI Documentation Team
 status: Approved
@@ -72,13 +72,13 @@ It applies to every person, agent, or sub-process that authors, reviews, or cons
 Every functional document (anything except this governance doc) MUST contain:
 
 1. Cover (title, version, date, author, status)
-2. Revision history
+2. Revision history (at least one row beyond headers, per §15 Quality Checklist)
 3. Table of contents
 4. Purpose & scope
 5. Audience
 6. Body (chapters, sections)
 7. Cross-references (where applicable)
-8. Glossary (or pointer to Document 00's glossary)
+8. Glossary (or pointer to this document's §16 Glossary and §17 Acronyms; the global glossary lives here)
 9. Appendix (where applicable)
 
 ## 4. Folder Structure
@@ -180,6 +180,7 @@ TEST-XXXX → AC-XX-NNNN → REQ-<DOMAIN>-<NUMBER>
 | Tool / plugin | `T-<NAME>` | `T-MARKET-DATA-FETCHER` | Plugin Architecture |
 | RAG collection | `RC-<DOMAIN>` | `RC-MARKET-SIGNALS` | RAG Architecture |
 | Test case | `TEST-NNNN` | `TEST-0042` | Testing |
+| Open decision | `DOC-OD-NN` | `DOC-OD-01` | Roadmap |
 
 ## 9. Diagram Standards
 
@@ -321,6 +322,7 @@ Use this form for every quarterly governance audit.
 |---|---|---|---|
 | v1.0 | 2026-07-20 | Doc Team | Initial governance doc; scope stated as Documents 00–30 |
 | v1.1 | 2026-07-20 | Doc Team | Scope statement bumped to 00–37 to match the v1.1 suite (added 7 supplementary docs 31–37); Doc 00's own revision history table added (closes a self-reference gap) |
+| v1.2 | 2026-07-20 | Doc Team | §8 ID systems table extended with `DOC-OD-NN` row for open decisions (closes L-1 from the drift report). §3.3 Required document sections made explicit: revision history needs ≥1 row beyond headers (closes L-3); glossary pointer now names §16 and §17 of this document as the global glossary (closes L-2). |
 
 ---
 

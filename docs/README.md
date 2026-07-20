@@ -1,6 +1,6 @@
 ---
 title: VentureMiner AI Documentation Suite — Index
-version: v1.0
+version: v1.1
 date: 2026-07-20
 author: VentureMiner AI Documentation Team
 status: Approved
@@ -157,3 +157,4 @@ This suite was authored in compliance with **Document 00 — Documentation Gover
 |---|---|---|---|
 | v1.0 | 2026-07-20 | Doc Team | First complete suite (31 documents, Markdown + PDF). |
 | v1.1 | 2026-07-20 | Doc Team | Added 7 supplementary documents (31–37): Pricing, Sales, Support, Marketing, Compliance, Sample Report, Onboarding. |
+| v1.1.1 | 2026-07-20 | Doc Team | Front-matter version corrected from v1.0 to v1.1 to match the body's revision history (closes the README's own self-reference gap, analogous to the Doc 00 fix in PR #2). |
