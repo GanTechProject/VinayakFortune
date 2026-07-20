@@ -1,6 +1,6 @@
 ---
 title: Agent Specifications
-version: v1.0
+version: v1.1
 date: 2026-07-20
 author: VentureMiner AI Documentation Team
 status: Approved
@@ -29,8 +29,9 @@ status: Approved
 15. Report writer (AGT-RPT-WRITER)
 16. Verifier (AGT-VERIFY)
 17. Safety filter (AGT-SAFETY)
-18. Critic (AGT-CRITIC)
-19. Appendix
+18. Generic planner (AGT-PLANNER)
+19. Critic (AGT-CRITIC)
+20. Appendix
 
 ## 1. Purpose & Scope
 
@@ -206,7 +207,16 @@ The full per-agent YAMLs live in `agent-runtime/agents/<id>/contract.yaml`. This
 - **Success criteria:** ≥ 99% PII recall on test set; zero policy violations.
 - **Test plan:** planted-PII test set; red-team review.
 
-## 18. Critic (AGT-CRITIC)
+## 18. Generic planner (AGT-PLANNER)
+
+- **Purpose:** Generate plans for novel sub-tasks that the orchestrator does not have a pre-built graph for.
+- **Inputs:** sub-task description, available tools, prior context.
+- **Outputs:** ordered step list with per-step tool/agent calls and success criteria.
+- **Tools:** RAG (internal catalog), MCP tool listing.
+- **Success criteria:** generated plan is executed end-to-end without human intervention ≥ 80% of the time on a held-out eval set.
+- **Test plan:** regression set of 50 novel sub-tasks; plan-execution simulation.
+
+## 19. Critic (AGT-CRITIC)
 
 - **Purpose:** Review a draft report and propose specific revisions.
 - **Inputs:** draft report, evidence, persona.
@@ -215,9 +225,9 @@ The full per-agent YAMLs live in `agent-runtime/agents/<id>/contract.yaml`. This
 - **Success criteria:** revisions accepted ≥ 70%.
 - **Test plan:** paired report comparison.
 
-## 19. Appendix
+## 20. Appendix
 
-### 19.1 Agent ID index
+### 20.1 Agent ID index
 
 | ID | Name |
 |---|---|
@@ -236,16 +246,18 @@ The full per-agent YAMLs live in `agent-runtime/agents/<id>/contract.yaml`. This
 | AGT-RPT-WRITER | Report writer |
 | AGT-VERIFY | Verifier |
 | AGT-SAFETY | Safety filter |
+| AGT-PLANNER | Generic planner |
 | AGT-CRITIC | Critic |
 
-### 19.2 Revision history
+### 20.2 Revision history
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
 | v0.5 | 2026-07-20 | Doc Team | All sections drafted |
 | v1.0 | 2026-07-20 | Doc Team | First approved version |
+| v1.1 | 2026-07-20 | Doc Team | Added `AGT-PLANNER` (Generic planner) to align with Document 08's 17-agent table; renumbered §18–§19 to §19–§20 |
 
-### 19.3 Cross-references
+### 20.3 Cross-references
 
 - Multi-Agent: Document 08.
 - System Architecture: Document 07.

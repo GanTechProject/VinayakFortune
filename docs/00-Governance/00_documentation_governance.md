@@ -1,6 +1,6 @@
 ---
 title: Documentation Governance
-version: v1.0
+version: v1.1
 date: 2026-07-20
 author: VentureMiner AI Documentation Team
 status: Approved
@@ -34,7 +34,7 @@ status: Approved
 
 ## 1. Purpose & Scope
 
-This document establishes the rules and conventions governing the entire VentureMiner AI documentation suite (Documents 00–30). It ensures every artifact — PRD, TRD, architecture, design, engineering — is **internally consistent, traceable, and reviewable**.
+This document establishes the rules and conventions governing the entire VentureMiner AI documentation suite (Documents 00–37). It ensures every artifact — PRD, TRD, architecture, design, engineering, supplementary — is **internally consistent, traceable, and reviewable**.
 
 It applies to every person, agent, or sub-process that authors, reviews, or consumes any document under the `ProjectSAAS/docs/` tree.
 
@@ -314,6 +314,13 @@ Use this form for every quarterly governance audit.
 | PDFs generated for all Approved docs | ☐ | |
 | Last 90 days: MAJOR bumps reviewed end-to-end | ☐ | |
 | Next audit due | | |
+
+## 19. Revision History
+
+| Version | Date | Author | Summary |
+|---|---|---|---|
+| v1.0 | 2026-07-20 | Doc Team | Initial governance doc; scope stated as Documents 00–30 |
+| v1.1 | 2026-07-20 | Doc Team | Scope statement bumped to 00–37 to match the v1.1 suite (added 7 supplementary docs 31–37); Doc 00's own revision history table added (closes a self-reference gap) |
 
 ---
 

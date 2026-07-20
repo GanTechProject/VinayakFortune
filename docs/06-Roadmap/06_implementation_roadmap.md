@@ -1,6 +1,6 @@
 ---
 title: Implementation Roadmap
-version: v1.0
+version: v1.1
 date: 2026-07-20
 author: VentureMiner AI Documentation Team
 status: Approved
@@ -60,6 +60,7 @@ It is intentionally less granular than the engineering backlog (which lives in t
 ### Q3 2026 — Foundations
 
 - Lock Documents 00–06 (this suite).
+- Lock supplementary documents 31–37 (Pricing, Sales, Support, Marketing, Compliance, Sample Report, Onboarding) — required for Q1 2027 Beta and SOC 2 readiness downstream.
 - Hire to 8 FTE (see Section 7).
 - Set up monorepo, CI/CD, dev environments.
 - Stand up staging environment.
@@ -67,11 +68,12 @@ It is intentionally less granular than the engineering backlog (which lives in t
 - Stand up LLM provider accounts (Anthropic + OpenAI).
 - Internal demo: design review of the AI plane architecture (Documents 07–18).
 
-**Exit criteria:** 8-person team operating; all baseline infra up; PRD/TRD/UIUX/Backend/Roadmap approved.
+**Exit criteria:** 8-person team operating; all baseline infra up; PRD/TRD/UIUX/Backend/Roadmap approved; supplementary documents 31–37 approved.
 
 ### Q4 2026 — Alpha
 
 - Implement the **AI plane** end-to-end: discovery, validation, scoring, reporting.
+- Implement the **AI plane services** end-to-end: `agent-runtime` (LangGraph orchestrator), `rag-svc`, `memory-svc`, `plugin-svc`, `source-svc`, `search-svc` (per Document 02 §4.1 service catalog).
 - Implement **auth, workspace, opportunity, score, report** services.
 - Build web shell (dashboard, opportunity list/detail, score, report viewer).
 - Implement **MVP rubric** (default only).
@@ -284,6 +286,7 @@ A release ships only if all of the following are true.
 |---|---|---|---|
 | v0.5 | 2026-07-20 | Doc Team | All sections drafted |
 | v1.0 | 2026-07-20 | Doc Team | First approved version |
+| v1.1 | 2026-07-20 | Doc Team | Q3 2026 exit criteria expanded to include supplementary docs 31–37 (closes H-3 from drift report); Q4 2026 plan names the AI plane services explicitly (`agent-runtime`, `rag-svc`, `memory-svc`, `plugin-svc`, `source-svc`, `search-svc` per Document 02 §4.1) |
 
 ### 11.3 Cross-references
 

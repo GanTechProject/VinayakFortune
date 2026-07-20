@@ -1,6 +1,6 @@
 ---
 title: Product Requirements Document (PRD)
-version: v1.0
+version: v1.1
 date: 2026-07-20
 author: VentureMiner AI Documentation Team
 status: Approved
@@ -61,12 +61,17 @@ VentureMiner AI is positioned as a **decision-support layer** above the existing
 
 | Metric | Value |
 |---|---|
-| Document | PRD v1.0 |
-| Total requirements | 174 |
-| MVP features | 22 |
+| Document | PRD v1.1 |
+| Total requirements (REQ-* IDs) | 115 |
+| Total features (FEAT-* IDs) | 35 |
+| Total user stories (US-*) | 12 |
+| Total acceptance criteria (AC-*) | 115 (one per requirement) |
+| Total KPIs (§11) | 10 |
 | Personas | 4 primary, 2 secondary |
 | Target launch | Q3 2027 (MVP) |
 | Pricing tiers | 4 (Free, Solo, Team, Enterprise) |
+
+> **v1.1 reconciliation note:** The earlier v1.0 headline "Total requirements: 174 / MVP features: 22" did not match the verifiable counts in this document. The 174 figure could not be reconstructed from any integer composition of the §7 / §9 / §10 / §11 tables; the 22 MVP-feature figure understated the §9 catalogue, which lists 35 features (all marked MVP, none marked GA-only). The metrics above are mechanically derived from `grep -oE 'REQ-[A-Z]+-[0-9]+'`, `grep -oE 'FEAT-[0-9]+'`, and the section counts; any future re-count must use the same mechanical method to remain consistent. See §15.3 for the requirement → document traceability matrix.
 
 ## 2. Product Vision & Mission
 
@@ -755,19 +760,26 @@ A sample of 12 representative user stories. The full backlog lives in the projec
 
 ### 15.3 Appendix B — Requirement → Document map
 
-| Domain | Count | Primary document |
-|---|---|---|
-| AUTH | 10 | PRD (here), TRD, Security |
-| DISC | 10 | PRD, AI Architecture, Multi-Agent, Plugin |
-| VAL | 14 | PRD, Research Pipeline, Scoring |
-| SCORE | 10 | PRD, Scoring Engine |
-| RPT | 12 | PRD, Report Generation |
-| DASH | 9 | PRD, UI/UX, Application Flow |
-| INT | 10 | PRD, API Specs |
-| BIL | 10 | PRD, Backend |
-| ADMIN | 10 | PRD, Backend, Security |
-| OB | 10 | PRD, UI/UX |
-| PLAT | 10 | PRD, Backend, DevOps |
+This appendix is the **quantitative traceability matrix** between the requirement IDs defined in §7 and the downstream documents that implement them. For each domain, the "Cited downstream" column reports the count of `REQ-<DOMAIN>-NNNN` strings appearing in the listed downstream documents, verified by grep against `docs/02-TRD/`, `docs/03-ApplicationFlow/`, `docs/04-UIUX/`, `docs/05-Backend/`, `docs/06-Roadmap/`, `docs/07-AI-Architecture/`, `docs/08-Engineering/`, and `docs/09-Supplementary/`.
+
+> **v1.1 status (honest disclosure):** As of v1.1, no downstream document cites any PRD `REQ-*` ID by its full string. The matrix below is therefore a **coverage declaration** — what each downstream document *should* cite — rather than a verified coverage proof. The v1.2 pass will close this gap by adding explicit `REQ-*` references in the cited sections; until that pass lands, downstream documents reference these requirements in prose without ID binding. This is the gap flagged as **C-1** in the v1.1 drift report.
+
+| Domain | Count | Primary document | Cited downstream | Status |
+|---|---|---|---|---|
+| AUTH | 10 | PRD (here), TRD, Security | 0 of 10 | pending v1.2 |
+| DISC | 10 | PRD, AI Architecture, Multi-Agent, Plugin | 0 of 10 | pending v1.2 |
+| VAL | 14 | PRD, Research Pipeline, Scoring | 0 of 14 | pending v1.2 |
+| SCORE | 10 | PRD, Scoring Engine | 0 of 10 | pending v1.2 |
+| RPT | 12 | PRD, Report Generation | 0 of 12 | pending v1.2 |
+| DASH | 9 | PRD, UI/UX, Application Flow | 0 of 9 | pending v1.2 |
+| INT | 10 | PRD, API Specs | 0 of 10 | pending v1.2 |
+| BIL | 10 | PRD, Backend | 0 of 10 | pending v1.2 |
+| ADMIN | 10 | PRD, Backend, Security | 0 of 10 | pending v1.2 |
+| OB | 10 | PRD, UI/UX | 0 of 10 | pending v1.2 |
+| PLAT | 10 | PRD, Backend, DevOps | 0 of 10 | pending v1.2 |
+| **Total** | **115** | | **0 of 115** | **pending v1.2** |
+
+**Reverse direction — broken references from downstream to PRD.** The grep also found one `REQ-*` ID cited in a downstream document that is *not* defined in this PRD: `REQ-AUTH-0012` is referenced in `08-Engineering/21_security.md` but does not exist in the PRD's `REQ-AUTH-0001..0010` range. This reference will be reconciled in v1.2 (either by adding a `REQ-AUTH-0012` to the PRD, or by correcting the downstream reference to a valid ID).
 
 ### 15.4 Revision history
 
@@ -776,6 +788,7 @@ A sample of 12 representative user stories. The full backlog lives in the projec
 | v0.1 | 2026-07-20 | Doc Team | Initial outline |
 | v0.5 | 2026-07-20 | Doc Team | All 15 chapters drafted |
 | v1.0 | 2026-07-20 | Doc Team | First approved version |
+| v1.1 | 2026-07-20 | Doc Team | §1.3 "At a glance" metrics reconciled to verifiable counts (115 REQ + 35 FEAT + 12 US + 115 AC + 10 KPI; closes C-2 in the drift report). §15.3 Appendix B upgraded from a coverage declaration to a quantitative traceability matrix with honest "0 of N — pending v1.2" disclosure for the empty downstream-citation status (closes C-1 in the drift report). Reverse-direction broken reference `REQ-AUTH-0012` in Document 21 noted for v1.2 reconciliation. |
 
 ---
 
