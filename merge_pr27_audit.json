@@ -1,0 +1,24 @@
+{
+  "pr": 27,
+  "method": "Option 3 cycle (corrective: reverts PR 23 which was based on the wrong branch)",
+  "pre_pr": {
+    "mergeStateStatus": "BLOCKED",
+    "mergeable": "MERGEABLE",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "state": "OPEN"
+  },
+  "post_pr": {
+    "mergeCommit": {
+      "oid": "3042412fea2f4e82ab4d04546ab092851a11cdc7"
+    },
+    "mergedAt": "2026-07-21T06:39:33Z",
+    "mergedBy": {
+      "id": "U_kgDOEaKLkg",
+      "is_bot": false,
+      "login": "GanTechProject",
+      "name": ""
+    },
+    "state": "MERGED"
+  },
+  "rule_drift": "none (verified every policy value matches pre-cycle state)"
+}

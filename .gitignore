@@ -65,3 +65,15 @@ $RECYCLE.BIN/
 /ai-plane-scratch/
 /scratch/
 /notes/
+
+# Cycle intermediates (per-run artifacts, not audit records)
+# These are the pre_*/post_*/put_*/open_*/delete_*/merge_pr{N}.json files
+# that each Option 3 cycle produces. The audit records (merge_pr*_audit.json)
+# ARE committed; the per-run outputs are not.
+/pre_*.json
+/post_*.json
+/put_*.json
+/open_prs.json
+/delete_reviews*.json
+/merge_pr[0-9]*.json
+!/merge_pr*_audit.json

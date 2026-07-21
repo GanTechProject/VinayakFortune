@@ -1,0 +1,24 @@
+{
+  "pr": 23,
+  "method": "Option 3 cycle: DELETE reviews rule -> MERGE --squash -> PUT reviews rule back",
+  "pre_pr": {
+    "mergeStateStatus": "BLOCKED",
+    "mergeable": "MERGEABLE",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "state": "OPEN"
+  },
+  "post_pr": {
+    "mergeCommit": {
+      "oid": "b6e12139b1d8e6fc89a3a77ae3753f5f482cd38f"
+    },
+    "mergedAt": "2026-07-21T06:14:26Z",
+    "mergedBy": {
+      "id": "U_kgDOEaKLkg",
+      "is_bot": false,
+      "login": "GanTechProject",
+      "name": ""
+    },
+    "state": "MERGED"
+  },
+  "rule_drift": "none (verified every policy value matches pre-cycle state)"
+}
