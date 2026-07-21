@@ -1,0 +1,35 @@
+{
+  "pr": 37,
+  "branch": "chore/commit-pr35-cycle",
+  "title": "chore: commit PR #35 cycle script + audit + fix True-vs-true bug",
+  "cycle_started": "2026-07-21T08:11:59Z",
+  "cycle_completed": "2026-07-21T08:11:59Z",
+  "cycle_outcome": "MERGED",
+  "pre_state": {
+    "pr_state": "OPEN",
+    "pr_mergeable": "MERGEABLE",
+    "open_prs": 1
+  },
+  "actions": [
+    "captured pre_reviews_rule_pr37.json (live rule at cycle start)",
+    "verified pre-conditions: 1 open PR, MERGEABLE, OPEN",
+    "DELETE required_pull_request_reviews",
+    "gh pr merge 37 --squash --delete-branch (succeeded)",
+    "PUT step ran cleanly: built PUT body from canonical via python (no jq dependency), PUT succeeded",
+    "drift check: approvals=1, contexts=[], strict=true (verified via LIVE_STRICT_PYTHON for shell-side check, emitted as JSON-valid via json.dumps in LIVE_STRICT)"
+  ],
+  "post_state": {
+    "main_sha": "dc14a8ffcd3d468913f8cf087eed7101d31395a5",
+    "live_required_approving_review_count": 1,
+    "live_required_status_checks_contexts": [],
+    "live_required_status_checks_strict": true
+  },
+  "files_changed": [
+    "merge_pr35_audit.json",
+    "scripts/merge_pr35_cycle.sh"
+  ],
+  "additions": 200,
+  "deletions": 0,
+  "closes": "#32",
+  "notes": "The Option 3 cycle for PR #37 is the first cycle whose audit JSON is valid out of the box. The True-vs-true bug (where the heredoc substituted python's print(True) output 'True' into a JSON context, producing invalid JSON) was fixed in PR #37's cycle script (the file being committed) by adding json.dumps() for the audit heredoc path while keeping the original print() form for the shell-side drift check. This preserves the verified-correct shell comparison from the option3-cycle-script-template memory while emitting JSON-valid output. Follow-up issue #36 tracks the same fix in the other two recent cycle scripts (merge_pr{33,34}_cycle.sh). The cycle ran cleanly: drift check passed, no false positive."
+}
