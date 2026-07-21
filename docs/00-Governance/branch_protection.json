@@ -26,6 +26,18 @@
     "would unblock any other open PR); (b) the PUT is retried on network failure",
     "so a flaky network cannot leave the branch unprotected.",
     "",
+    "STATUS-CHECKS SEQUENCING: the required_status_checks.contexts list MUST",
+    "reference workflow names that already exist in .github/workflows/ on the",
+    "branch. The classic branch-protection API does not let you DELETE just the",
+    "status-checks rule (no sub-endpoint exists for it, unlike the reviews rule).",
+    "So the safe sequence is: (1) add the workflow files first (creates the",
+    "contexts in the API), (2) PUT the contexts list. Putting the contexts in",
+    "this file BEFORE the workflow files exist will block every push to main",
+    "until the workflows land, with no clean way to bypass it. As of v1.2 the",
+    "two workflows (ci-hello-world, docs-lint) are pending human-attested",
+    "addition via the GitHub web UI (OAuth workflow-scope blocks the CLI), so",
+    "this file lists contexts: [] until they land.",
+    "",
     "When a second human joins, the 1-approval rule auto-engages -- no edit",
     "needed. If migration to GitHub Repository Rulesets is desired (a separate API",
     "that decouples 'PR required' from 'PR review required'), the ruleset endpoint",
@@ -38,10 +50,7 @@
   ],
   "required_status_checks": {
     "strict": true,
-    "contexts": [
-      "ci-hello-world / test-lint-build",
-      "docs-lint / lint"
-    ]
+    "contexts": []
   },
   "enforce_admins": true,
   "required_pull_request_reviews": {
