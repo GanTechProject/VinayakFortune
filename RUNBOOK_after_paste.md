@@ -11,7 +11,7 @@ For each of the two workflow files:
 1. Open the GitHub web UI.
 2. Click "Add file" → "Create new file".
 3. Type the path: `.github/workflows/ci-hello-world.yml` (then `docs-lint.yml` for the second one).
-4. Paste the file content (see `services/ci/workflows/ci-hello-world.yml.txt` and `docs-lint.yml.txt` for paste-ready copies, or read them from the local `ci/initial-workflows` branch).
+4. Paste the file content. The canonical source is the `ci/initial-workflows` branch (commit `3c8e5f9`); read the files from there via the GitHub web UI ("View file" → copy) or fetch them locally with `git show ci/initial-workflows -- .github/workflows/ci-hello-world.yml` and the same for `docs-lint.yml`.
 5. Commit directly to `main` with a clear message:
    - "ci: add ci-hello-world workflow (test + lint + build + smoke)"
    - "ci: add docs-lint workflow (front-matter + revision-history + orphan check)"
