@@ -1,6 +1,6 @@
 ---
 title: VentureMiner AI — AI Venture Intelligence Platform
-version: v1.3
+version: v1.4
 date: 2026-07-21
 author: VentureMiner AI Documentation Team
 status: Approved
@@ -113,8 +113,8 @@ This repository is currently in the **pre-implementation → foundations** trans
 
 The project is paused on a single 5-minute human-only action. The orchestrator cannot unblock this — only the conductor can.
 
-- **What is gated:** `.github/workflows/ci-hello-world.yml` and `.github/workflows/docs-lint.yml` are committed to branch [`ci/initial-workflows`](https://github.com/GanTechProject/VinayakFortune/tree/ci/initial-workflows) (commit `3c8e5f9`) but cannot be pushed to `main` by the bot because the GitHub OAuth `workflow` scope is not granted. Without these two workflow files on `main`, CI is not enforcing and Phase C is parked.
-- **The recipe:** [Phase C Post-Unblock Roadmap](docs/00-Governance/PHASE_C_POST_UNBLOCK_ROADMAP.md) §2 (in [PR #42](https://github.com/GanTechProject/VinayakFortune/pull/42), awaiting merge) — open the workflows PR, merge via the Option 3 cycle, push a no-op third commit to trigger an actual workflow run, then the orchestrator runs `bash scripts/post_paste_cycle.sh` to register the context names.
+- **What is gated:** `.github/workflows/ci-hello-world.yml` and `.github/workflows/docs-lint.yml` exist only on a local branch `ci/initial-workflows` (commit `3c8e5f9`) in the orchestrator's local clone. They were never pushed to `main` by the bot because the GitHub OAuth `workflow` scope is not granted (pushing a branch that contains `.github/workflows/` changes requires that scope). Without these two workflow files on `main`, CI is not enforcing and Phase C is parked.
+- **The recipe:** [Phase C Post-Unblock Roadmap](docs/00-Governance/PHASE_C_POST_UNBLOCK_ROADMAP.md) §2 (in [PR #42](https://github.com/GanTechProject/VinayakFortune/pull/42), awaiting merge) — paste the two workflow files directly into `main` via the GitHub web UI ("Add file" → "Create new file"), then push a no-op third commit to trigger an actual workflow run, then the orchestrator runs `bash scripts/post_paste_cycle.sh` to register the context names.
 - **Failure-mode table:** [RUNBOOK_after_paste.md](RUNBOOK_after_paste.md) on main.
 - **Estimated duration:** ~5 minutes. After the unblock, the auth-svc `InMemorySessionManager` implementation begins immediately (branch [`wip/auth-svc-session-manager`](https://github.com/GanTechProject/VinayakFortune/tree/wip/auth-svc-session-manager) is staged).
 
@@ -139,3 +139,4 @@ All documents in this suite conform to the rules in `docs/00-Governance/00_docum
 | v1.1 | 2026-07-20 | Doc Team | Clarified repository vs. project naming: repo is `VinayakFortune`, project is **VentureMiner AI**. |
 | v1.2 | 2026-07-20 | Doc Team | Foundations monorepo scaffold: `services/hello-world/` (FastAPI sample, AC-1.1), `web/`, `ai-plane/`, `infra/` placeholders, `Makefile`, `docker-compose.yml`, GitHub Actions workflows (`ci-hello-world`, `docs-lint`). Closes the local-buildable portion of [issue #4](https://github.com/GanTechProject/VinayakFortune/issues/4); the AWS-side ACs (1.3-1.16) remain for the operator-side follow-up. |
 | v1.3 | 2026-07-21 | Orchestrator | Added a "🚦 The unblock (conductor action required)" section to surface the single hard gate (OAuth-scope block on `.github/workflows/`) on the repo home page, with deep links to the Phase C roadmap (PR #42), the runbook, and the auth-svc WIP branch. The unblock was previously only documented in issue comments and on a PR awaiting merge; placing it here makes the gate impossible to miss when the conductor opens the repo. |
+| v1.4 | 2026-07-21 | Orchestrator | Corrected the unblock section: removed the broken `github.com/.../tree/ci/initial-workflows` deep link (the branch is local-only and the URL returns 404), and rewrote "The recipe" to describe the actual viable flow — paste the workflow files into `main` via the GitHub web UI, then push a no-op third commit to trigger an actual workflow run. Previously said "open the workflows PR, merge via the Option 3 cycle", which is not viable because the workflows branch was never pushed to `origin` (the OAuth-scope block that gates the workflows also gates the branch that contains them). Cross-cuts: the Phase C Post-Unblock Roadmap §2 and §7 (also corrected this turn). The unblock story is now consistent across README, runbook, and roadmap — all three describe the same executable flow. |

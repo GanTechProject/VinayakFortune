@@ -11,7 +11,15 @@ For each of the two workflow files:
 1. Open the GitHub web UI.
 2. Click "Add file" → "Create new file".
 3. Type the path: `.github/workflows/ci-hello-world.yml` (then `docs-lint.yml` for the second one).
-4. Paste the file content. The canonical source is the `ci/initial-workflows` branch (commit `3c8e5f9`); read the files from there via the GitHub web UI ("View file" → copy) or fetch them locally with `git show ci/initial-workflows -- .github/workflows/ci-hello-world.yml` and the same for `docs-lint.yml`.
+4. Paste the file content. The canonical source is the `ci/initial-workflows` branch (commit `3c8e5f9`), which exists **only in the local clone** (it was never pushed to `origin` because its single commit adds the workflow files themselves and the OAuth scope block prevents that). The reliable way to retrieve the contents is therefore **local, not web-UI**:
+   - **Primary (local clone, recommended):** in the local clone, run
+     ```bash
+     git show ci/initial-workflows -- .github/workflows/ci-hello-world.yml
+     git show ci/initial-workflows -- .github/workflows/docs-lint.yml
+     ```
+     The `--` is mandatory on Windows; the colon-form `git show <ref>:<path>` is parsed as a path separator by Git Bash and fails. Copy the file body (everything after the `diff --git` / `+++` lines / `@@` hunk header — the leading `+` markers are diff artifacts, not part of the file content).
+   - **Fallback (no local clone):** if you do not have a local clone of this repo, ask the orchestrator to paste the file contents into the chat. The orchestrator reads from the local `ci/initial-workflows` ref and pastes both files in full.
+   - **The GitHub web UI "View file" path does not work** — the branch is not pushed to the remote, so navigating to `github.com/GanTechProject/VinayakFortune/tree/ci/initial-workflows` shows a 404. Do not waste time looking for it there.
 5. Commit directly to `main` with a clear message:
    - "ci: add ci-hello-world workflow (test + lint + build + smoke)"
    - "ci: add docs-lint workflow (front-matter + revision-history + orphan check)"
