@@ -55,13 +55,3 @@ $RECYCLE.BIN/
 *.log
 *.tmp
 *.bak
-
-# Operator-side dev inputs — chat logs, prompts, scratch notes used to
-# generate the docs. These are not part of the product repo. (See
-# ChatHistory.txt, which was accidentally committed in the bootstrap
-# and is still tracked on main; that file is being cleaned up in a
-# separate PR — this rule prevents future ones from being added.)
-/ChatHistory.txt
-/ai-plane-scratch/
-/scratch/
-/notes/
