@@ -1,7 +1,7 @@
 ---
 title: CI/CD
-version: v1.0
-date: 2026-07-20
+version: v1.1
+date: 2026-07-21
 author: VentureMiner AI Documentation Team
 status: Approved
 ---
@@ -122,6 +122,7 @@ A gate failure blocks the next stage; a release tag with a failing gate cannot b
 - **OIDC** between GitHub Actions and AWS — short-lived credentials.
 - No long-lived secrets in CI; secrets pulled at job start from AWS Secrets Manager via OIDC.
 - Logs are scrubbed for secret patterns; CI fails if a known secret is found.
+- **Workflow-file auth.** GitHub requires the `workflow` OAuth scope (separate from `repo`) to push files into `.github/workflows/`. The CI operator's local CLI token does NOT have this scope by default, so workflow files must be created via the GitHub web UI ("Add file" → "Create new file") and committed by a human. Once a workflow file exists on a branch, the runner that executes it uses GitHub's own auth, not the operator's CLI token. The canonical branch-protection rule (`docs/00-Governance/branch_protection.json`) reflects this by requiring the workflow files to exist on main BEFORE the corresponding `required_status_checks.contexts` entries are added — see the STATUS-CHECKS SEQUENCING note in that file.
 
 ## 11. Pipeline observability
 
@@ -144,6 +145,7 @@ A gate failure blocks the next stage; a release tag with a failing gate cannot b
 |---|---|---|---|
 | v0.5 | 2026-07-20 | Doc Team | All sections drafted |
 | v1.0 | 2026-07-20 | Doc Team | First approved version |
+| v1.1 | 2026-07-21 | Doc Team | §10 Secrets in CI — added "Workflow-file auth" bullet documenting the `workflow` OAuth scope block on `.github/workflows/` push and the canonical-file sequencing rule (workflows first, contexts second). Closes the unblock-coordination gap that produced the branch-protection deadlock documented in `docs/00-Governance/branch_protection.json` §"STATUS-CHECKS SEQUENCING". |
 
 ### 13.2 Cross-references
 
