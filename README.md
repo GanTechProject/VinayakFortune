@@ -1,7 +1,7 @@
 ---
 title: VentureMiner AI — AI Venture Intelligence Platform
-version: v1.2
-date: 2026-07-20
+version: v1.3
+date: 2026-07-21
 author: VentureMiner AI Documentation Team
 status: Approved
 ---
@@ -11,7 +11,7 @@ status: Approved
 > **Project name:** VentureMiner AI — AI Venture Intelligence Platform
 > **Repository name:** `VinayakFortune` (the GitHub URL slug — a legacy / umbrella identifier; the project itself is **VentureMiner AI**)
 > **Suite version:** v1.0
-> **Last updated:** 2026-07-20
+> **Last updated:** 2026-07-21
 
 > **AI Venture Intelligence Platform** — turn market signals into validated, monetizable SaaS opportunities in hours, not quarters.
 
@@ -109,6 +109,15 @@ Dependencies: `reportlab>=5.0`, `markdown>=3.5`.
 
 This repository is currently in the **pre-implementation → foundations** transition. The 38-document spec suite (v1.2) is the contract; the **foundations monorepo** (services/hello-world, web/, ai-plane/, infra/, .github/workflows/) is now scaffolded as the entry point for the [issue ledger](https://github.com/GanTechProject/VinayakFortune/issues) (17 issues filed, 115/115 REQ-* IDs cited downstream per the corrected PRD §15.3 traceability matrix). The implementation roadmap in `docs/06-Roadmap/06_implementation_roadmap.md` defines the work that follows.
 
+### 🚦 The unblock (conductor action required)
+
+The project is paused on a single 5-minute human-only action. The orchestrator cannot unblock this — only the conductor can.
+
+- **What is gated:** `.github/workflows/ci-hello-world.yml` and `.github/workflows/docs-lint.yml` are committed to branch [`ci/initial-workflows`](https://github.com/GanTechProject/VinayakFortune/tree/ci/initial-workflows) (commit `3c8e5f9`) but cannot be pushed to `main` by the bot because the GitHub OAuth `workflow` scope is not granted. Without these two workflow files on `main`, CI is not enforcing and Phase C is parked.
+- **The recipe:** [Phase C Post-Unblock Roadmap](docs/00-Governance/PHASE_C_POST_UNBLOCK_ROADMAP.md) §2 (in [PR #42](https://github.com/GanTechProject/VinayakFortune/pull/42), awaiting merge) — open the workflows PR, merge via the Option 3 cycle, push a no-op third commit to trigger an actual workflow run, then the orchestrator runs `bash scripts/post_paste_cycle.sh` to register the context names.
+- **Failure-mode table:** [RUNBOOK_after_paste.md](RUNBOOK_after_paste.md) on main.
+- **Estimated duration:** ~5 minutes. After the unblock, the auth-svc `InMemorySessionManager` implementation begins immediately (branch [`wip/auth-svc-session-manager`](https://github.com/GanTechProject/VinayakFortune/tree/wip/auth-svc-session-manager) is staged).
+
 ### Quick start
 
 ```bash
@@ -129,3 +138,4 @@ All documents in this suite conform to the rules in `docs/00-Governance/00_docum
 | v1.0 | 2026-07-20 | Doc Team | Initial 38-doc suite (Markdown + PDF), pushed to `GanTechProject/VinayakFortune`. |
 | v1.1 | 2026-07-20 | Doc Team | Clarified repository vs. project naming: repo is `VinayakFortune`, project is **VentureMiner AI**. |
 | v1.2 | 2026-07-20 | Doc Team | Foundations monorepo scaffold: `services/hello-world/` (FastAPI sample, AC-1.1), `web/`, `ai-plane/`, `infra/` placeholders, `Makefile`, `docker-compose.yml`, GitHub Actions workflows (`ci-hello-world`, `docs-lint`). Closes the local-buildable portion of [issue #4](https://github.com/GanTechProject/VinayakFortune/issues/4); the AWS-side ACs (1.3-1.16) remain for the operator-side follow-up. |
+| v1.3 | 2026-07-21 | Orchestrator | Added a "🚦 The unblock (conductor action required)" section to surface the single hard gate (OAuth-scope block on `.github/workflows/`) on the repo home page, with deep links to the Phase C roadmap (PR #42), the runbook, and the auth-svc WIP branch. The unblock was previously only documented in issue comments and on a PR awaiting merge; placing it here makes the gate impossible to miss when the conductor opens the repo. |
