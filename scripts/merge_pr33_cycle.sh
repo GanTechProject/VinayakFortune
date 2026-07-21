@@ -102,7 +102,10 @@ gh api repos/GanTechProject/VinayakFortune/branches/main/protection \
     > "post_protection_pr${PR}.json" 2>/dev/null
 LIVE_APPROVALS=$(python -c "import json; d=json.load(open('post_protection_pr${PR}.json')); print(d['required_pull_request_reviews']['required_approving_review_count'])")
 LIVE_CONTEXTS=$(python -c "import json; d=json.load(open('post_protection_pr${PR}.json')); print(d['required_status_checks']['contexts'])")
-LIVE_STRICT=$(python -c "import json; d=json.load(open('post_protection_pr${PR}.json')); print(d['required_status_checks']['strict'])")
+# JSON-valid form for the audit heredoc (json.dumps returns "true" lowercase).
+LIVE_STRICT=$(python -c "import json; d=json.load(open('post_protection_pr${PR}.json')); print(json.dumps(d['required_status_checks']['strict']))")
+# Shell-side form for the drift check (python's print(True) returns "True" capitalized).
+LIVE_STRICT_PYTHON=$(python -c "import json; d=json.load(open('post_protection_pr${PR}.json')); print(d['required_status_checks']['strict'])")
 
 echo "  live required_approving_review_count: ${LIVE_APPROVALS} (expect 1)"
 echo "  live required_status_checks.contexts: ${LIVE_CONTEXTS} (expect [])"
@@ -114,9 +117,9 @@ fi
 if [[ "${LIVE_CONTEXTS}" != "[]" ]]; then
     echo "  DRIFT: contexts not empty"; exit 1
 fi
-# Note: Python prints True/False (capitalized). The shell test below is correct
-# because bash sees the string "True" and the script expects "True" (not "true").
-if [[ "${LIVE_STRICT}" != "True" ]]; then
+# Drift check uses the legacy "True" comparison (via LIVE_STRICT_PYTHON) per the
+# option3-cycle-script-template memory's verified-correct pattern.
+if [[ "${LIVE_STRICT_PYTHON}" != "True" ]]; then
     echo "  DRIFT: strict not true"; exit 1
 fi
 echo "  drift check OK"
