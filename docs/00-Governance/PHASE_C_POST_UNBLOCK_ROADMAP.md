@@ -1,6 +1,6 @@
 ---
 title: Phase C Post-Unblock Roadmap
-version: v1.0
+version: v1.1
 date: 2026-07-21
 author: VentureMiner AI Orchestrator
 status: Approved
@@ -53,16 +53,24 @@ status: Approved
 4. The PR brings in two files:
    - `.github/workflows/ci-hello-world.yml`
    - `.github/workflows/docs-lint.yml`
-5. After the PR is open, the orchestrator runs the post-paste cycle:
+5. **The orchestrator runs the Option 3 cycle to merge this PR** (`bash scripts/merge_pr42_cycle.sh` — the script is ready on the working tree). At this point the two workflow files are on `main` but **no workflow has run yet** (GitHub Actions does not run on the commit that adds the workflow file itself; the workflow definition did not exist when that commit was pushed).
+6. **Trigger a workflow run.** A second push to `main` is required so the workflows actually execute and GitHub registers their context names. The simplest trigger is a no-op commit on a `chore/trigger-workflow-run` branch (PR'd and Option-3-merged the same way), or a single-character edit to any tracked file via the GitHub web UI.
+7. **The orchestrator runs the post-paste cycle** (after the workflows have run at least once):
    ```bash
    bash scripts/post_paste_cycle.sh
    ```
-   The runbook is in `RUNBOOK_after_paste.md` (on main) and in the `oauth-workflow-scope-block` memory.
+   This step **requires the context names to be registered** (i.e. step 6 must have completed). If the script reports "no checks observed," the trigger commit hasn't propagated yet — wait 30s and re-run.
 
-**What the post-paste cycle does:**
-- Merges the workflows PR via the Option 3 cycle
-- Registers the workflow names as required status check contexts (the `STATUS-CHECKS SEQUENCING` note in `docs/00-Governance/branch_protection.json` explains why this ordering matters)
-- Verifies the canonical state via the live API
+The full operational detail is in `RUNBOOK_after_paste.md` (on main) and the `oauth-workflow-scope-block` memory. The runbook covers the failure modes (YAML syntax errors, smoke-test failures, docs-lint failures, branch-protection PUT failures) and their recoveries.
+
+**What the post-paste cycle does (in `post_paste_cycle.sh`):**
+- Reads the registered context names from the live API (the names of the checks that have actually run)
+- Updates `docs/00-Governance/branch_protection.json` to list those names in `required_status_checks.contexts`
+- PUTs the updated rule back to the live API
+- Verifies the PUT (live API matches the canonical file)
+- (If a trigger PR is open) runs the Option 3 cycle on it
+
+The end state: the live branch-protection rule has `required_status_checks.contexts: ["ci-hello-world", "docs-lint"]`, and the next PR opened to `main` will see both as required status checks.
 
 ## 3. The post-unblock sequence
 
@@ -164,6 +172,10 @@ The cycle-artifacts follow-up pattern (commit each cycle's script + audit as a f
 ### 1.0 Revision history
 
 Initial version. Captures the post-recovery state of the repo as of 2026-07-21, prescribes the unblock path, and lists the Phase C service order.
+
+### 1.1 Revision history
+
+§2 (The unblock) restructured from 5 steps to 7 steps to capture the actual sequence: **(a)** the conductor opens the workflows PR, **(b)** the orchestrator runs the Option 3 cycle to merge it (so the workflow files are on `main`), **(c)** a third commit (no-op) is pushed to `main` to trigger an actual workflow run (GitHub Actions does not run on the commit that adds the workflow file itself), and only then **(d)** the orchestrator runs `bash scripts/post_paste_cycle.sh` to register the context names. The previous wording conflated steps (b)–(d), which would have led a future reader to call `post_paste_cycle.sh` before the workflows had run — at which point the script would warn "no checks observed" and exit without changing anything. The expanded §2 also points more explicitly to `RUNBOOK_after_paste.md` for the failure-mode table. MINOR bump per Document 00 §6 (additive operational detail, no change to meaning).
 
 ## 11. Open decisions
 
