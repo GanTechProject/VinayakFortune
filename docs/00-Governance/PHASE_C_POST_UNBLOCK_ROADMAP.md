@@ -136,8 +136,8 @@ The `empty-cohort-dont-fabricate` memory is the discipline: when no executable B
 The cycle-artifacts follow-up pattern (commit each cycle's script + audit as a follow-up PR) ran 5 times in this session (PRs #34, #35, #37, #39, #41). It is now **paused** per the orchestrator's strategic decision.
 
 **Why paused, not deleted:**
-- The cycle dance only exists because of the manual DELETE/PUT for the single-human merge. Once CI handles PR approval (post-unblock), the Option 3 cycle is no longer needed for routine PRs.
-- The historical audit chain (PRs #18 through #41) is complete and the artifacts are tracked in `scripts/` and at the repo root.
+- The cycle dance only exists because of the manual DELETE/PUT for the single-human merge. With the Path 1 policy change (`required_approving_review_count: 0` in `docs/00-Governance/branch_protection.json`), the author can now self-merge via the GitHub UI/API directly, and the Option 3 cycle is no longer required for routine PRs. Once the CI workflows land and provide the actual review-quality gate (post-unblock), the cycle is fully obsolete.
+- The historical audit chain (PRs #18 through #41) is complete and the artifacts are tracked in `scripts/` and at the repo root. These are immutable records of cycles that ran under the old 1-approval policy.
 - Future cycles (if any) can resume the convention. Issue #38 tracks the conductor's eventual decision.
 
 ## 6. Decision ledger

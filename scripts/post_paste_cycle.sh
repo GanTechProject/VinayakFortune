@@ -57,18 +57,21 @@
 # via web UI or a separate trigger PR), and the orchestrator then
 # runs this script to register the contexts in branch_protection.
 #
-# Note on "self-merge": the branch protection has 1-approval +
-# enforce_admins, which prevents self-approval of one's own PR via
-# the API or UI. The only way any PR (including the third-commit
-# trigger) can land is:
-#   (a) The orchestrator runs the Option 3 cycle (DELETE reviews
+# Note on "self-merge": the canonical branch protection now has
+# required_approving_review_count: 0 (Path 1 policy change), so the
+# author can self-merge via the GitHub UI/API directly. The legacy
+# "1-approval + enforce_admins" rule was structurally unsatisfiable
+# on a single-human repo (the only writer is the only candidate
+# reviewer, and they are always the PR author). Going forward, the
+# two viable paths for the third-commit trigger PR are:
+#   (a) The conductor merges via the GitHub UI/API directly (0
+#       approvals are trivially satisfied; the PR-required + CI-
+#       required gates remain).
+#   (b) The orchestrator runs the Option 3 cycle (DELETE reviews
 #       rule, merge, PUT it back). This is what
-#       merge_prN_cycle.sh does.
-#   (b) The human merges via a different mechanism (e.g. by
-#       temporarily removing the branch protection, which is
-#       discouraged because it leaves the rule off if the script
-#       crashes).
-# This script implements (a) for the trigger PR via Step 5 below;
+#       merge_prN_cycle.sh does. The cycle is optional now (it was
+#       mandatory under the pre-Path-1 unsatisfiable 1-approval rule).
+# This script implements (b) for the trigger PR via Step 5 below;
 # Step 5 invokes merge_pr${TRIGGER_PR_NUMBER}_cycle.sh if a PR
 # number is provided.
 #

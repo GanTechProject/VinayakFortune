@@ -86,7 +86,7 @@ After the cycle, the live branch-protection rule on `main`:
     "contexts": ["ci-hello-world", "docs-lint"]
   },
   "required_pull_request_reviews": {
-    "required_approving_review_count": 1,
+    "required_approving_review_count": 0,
     ...
   },
   ...
