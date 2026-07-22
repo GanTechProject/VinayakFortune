@@ -8,9 +8,9 @@ The `merge_pr{18,23,24,25,27,31,33}_cycle.sh` scripts are the **per-PR audit rec
 
 ### What is the Option 3 cycle?
 
-The Option 3 cycle is the single-human merge cycle used on this repo because GitHub's review model blocks self-approval of one's own PR (the canonical branch protection has `required_pull_request_reviews.required_approving_review_count: 1`, which physically prevents the owner from merging their own PRs through the GitHub UI / API).
+The Option 3 cycle is the **legacy single-human merge dance** that was used on this repo while the canonical branch protection had `required_pull_request_reviews.required_approving_review_count: 1`. Under that rule, GitHub's review model blocks self-approval of one's own PR — a single-human author cannot satisfy the 1-approval gate, so the cycle DELETEs the rule, merges, and PUTs it back. With the Path 1 policy change (the canonical file now has `required_approving_review_count: 0`), the cycle is no longer required for routine PRs: the author can self-merge via the GitHub UI/API directly.
 
-The cycle:
+The cycle (still works under either policy, used for historical PRs and for any future PRs where the conductor prefers the scripted form):
 
 1. **DELETE** the `required_pull_request_reviews` rule (so self-merge is allowed).
 2. **MERGE** the PR (squash, with branch deletion).

@@ -4,15 +4,31 @@
 # .github/workflows/docs-lint.yml) via the GitHub web UI.
 #
 # Pre-conditions (all of these must be true before running):
-#   1. The workflow files exist on `main` (humans pasted them, the
-#      workflow files PR is open or merged, the API shows the files
-#      at the tip of main).
-#   2. The workflow files PR is OPEN (or, if merged, this script is
-#      moot -- the contexts are already registered).
-#   3. There is exactly one open PR (this script's DELETE window
-#      would unblock any other open PR).
-#   4. The workflows have run at least once (so GitHub has registered
-#      the context names in the API).
+#   1. The two workflow files exist on `main` -- verify with:
+#        gh api repos/$REPO/contents/.github/workflows/ci-hello-world.yml
+#        gh api repos/$REPO/contents/.github/workflows/docs-lint.yml
+#      (The conductor pastes the files directly into `main` via the
+#      GitHub web UI per PHASE_C_POST_UNBLOCK_ROADMAP.md §2 -- there
+#      is NO "workflow files PR"; the OAuth `workflow` scope block
+#      prevents the bot from opening one, and the paste-into-main
+#      path bypasses that gate.)
+#   2. The workflows have run at least once on a commit PAST the
+#      workflow-file-arrival commit. (GitHub Actions does not run on
+#      the commit that adds the workflow file itself -- the
+#      conductor must push a third (no-op) commit to trigger an
+#      actual run, per RUNBOOK_after_paste.md.) Verify with:
+#        gh api "repos/$REPO/commits?per_page=10" | jq -r '.[].check_runs[].name'
+#      (or read observed_contexts.txt after Step 1 below).
+#   3. The canonical docs/00-Governance/branch_protection.json has
+#      `required_status_checks.contexts: []` -- this script's job is
+#      to populate it from the observed check names.
+#
+# NOTE: this script does NOT care about the open-PR count. It does
+# no DELETE on the reviews rule; that is the merge_prN_cycle.sh
+# script's job. The post-paste cycle and the merge cycle are
+# independent: a third (no-op) commit push may be merged by a
+# separate merge_prN_cycle.sh run before, after, or instead of
+# running this script.
 #
 # What this script does:
 #   1. Reads the registered context names from the live branch-
@@ -26,28 +42,38 @@
 #      Option 3 cycle on that PR to merge it.
 #
 # Usage:
-#   bash scripts/post_paste_cycle.sh [WORKFLOW_FILES_PR_NUMBER]
+#   bash scripts/post_paste_cycle.sh [TRIGGER_PR_NUMBER]
 #
 # If no PR number is passed, the script does steps 1-4 only (no
 # merge). This is the right mode for the very first run after the
-# human pastes, when the human may have already merged the
-# workflows PR via the GitHub web UI's "Merge" button (which works
-# because the 1-approval rule is bypassed by the human's admin
-# override? No -- it doesn't work; see note below). In practice
-# the human pastes via web UI and the orchestrator then runs this
-# script to register the contexts.
+# human pastes, when the third-commit-trigger PR may have already
+# been merged by a separate merge_prN_cycle.sh invocation, or when
+# the conductor did the third-commit trigger via the GitHub web UI
+# directly (web-UI no-op commits work because they don't need a
+# reviews-rule bypass -- they go through the normal merge path with
+# the conductor's own admin override on a single-human repo, OR via
+# a separate merge_prN_cycle.sh). In practice the conductor pastes
+# the workflow files via web UI, pushes a no-op third commit (also
+# via web UI or a separate trigger PR), and the orchestrator then
+# runs this script to register the contexts in branch_protection.
 #
-# Note on "self-merge": the branch protection has 1-approval +
-# enforce_admins, which prevents self-approval via the API or UI.
-# The only way the workflows PR can land is:
-#   (a) The orchestrator runs the Option 3 cycle (DELETE reviews
-#       rule, merge, PUT it back). This is what this script's
-#       step-5 mode does.
-#   (b) The human merges via a different mechanism (e.g. by
-#       temporarily removing the branch protection, which is
-#       discouraged because it leaves the rule off if the script
-#       crashes).
-# This script implements (a).
+# Note on "self-merge": the canonical branch protection now has
+# required_approving_review_count: 0 (Path 1 policy change), so the
+# author can self-merge via the GitHub UI/API directly. The legacy
+# "1-approval + enforce_admins" rule was structurally unsatisfiable
+# on a single-human repo (the only writer is the only candidate
+# reviewer, and they are always the PR author). Going forward, the
+# two viable paths for the third-commit trigger PR are:
+#   (a) The conductor merges via the GitHub UI/API directly (0
+#       approvals are trivially satisfied; the PR-required + CI-
+#       required gates remain).
+#   (b) The orchestrator runs the Option 3 cycle (DELETE reviews
+#       rule, merge, PUT it back). This is what
+#       merge_prN_cycle.sh does. The cycle is optional now (it was
+#       mandatory under the pre-Path-1 unsatisfiable 1-approval rule).
+# This script implements (b) for the trigger PR via Step 5 below;
+# Step 5 invokes merge_pr${TRIGGER_PR_NUMBER}_cycle.sh if a PR
+# number is provided.
 #
 # This script is idempotent: re-running it is safe. If the canonical
 # file already lists the registered contexts, step 2 is a no-op. If
@@ -213,10 +239,10 @@ else:
 PY
 
 echo ""
-echo "=== Step 5 (optional): merge the workflows PR via Option 3 cycle ==="
+echo "=== Step 5 (optional): merge the third-commit-trigger PR via Option 3 cycle ==="
 if [ -z "$PR" ]; then
     echo "  no PR number provided. Skipping merge. (Re-run with the"
-    echo "  workflows PR number to merge it.)"
+    echo "  third-commit-trigger PR number to merge it.)"
 else
     echo "  running Option 3 cycle on PR #$PR..."
     if [ -f "scripts/merge_pr${PR}_cycle.sh" ]; then
