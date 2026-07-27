@@ -71,13 +71,13 @@ Each environment is in its own AWS account; cross-account access is least-privil
 
 The canonical, version-controlled record of the `main` branch protection policy lives at `docs/00-Governance/branch_protection.json`. Operators and CI jobs that need to verify or re-apply the rule read that file, not the GitHub API directly. The current rule is:
 
-- 1 approving review required.
+- 0 approving reviews required (the author can self-merge).
 - `enforce_admins: true` — admins are subject to the same rule.
 - No force-pushes, no deletions.
 - Conversation resolution required before merge.
 - Status checks: strict, with the project's CI suite providing the required contexts.
 
-> **Why a single-human repo is non-blocked by 1-approval review:** GitHub blocks self-approval of one's own PR for classic branch protection. The repository owner cannot merge a PR through the UI/API while the rule is in force; merging requires either a second human with write access to approve, or a temporary rule toggle by an admin (the same person). The canonical policy is therefore intentionally strict — the operational intent is "no self-merge by default." See `docs/00-Governance/branch_protection.json` for the policy comment block.
+> **Why 0 approvals on a single-human repo:** GitHub blocks self-approval of one's own PR for classic branch protection. The repository owner cannot satisfy a `required_approving_review_count: 1` rule by approving their own PR — the rule is structurally unsatisfiable when the author is the only writer. With 0 approvals, the author can merge their own PR through the UI/API. The PR-required gate (no direct pushes) and the CI-required gate (status checks must pass) provide the actual review-quality guarantees. The historical Option 3 cycle (DELETE rule → merge → PUT back) was the pre-Path-1 workaround for the unsatisfiable 1-approval gate; with 0 approvals, the cycle is no longer required for routine merges (the conductor hits the merge button directly). See `docs/00-Governance/branch_protection.json` for the policy comment block, and the `single-human-repo-self-approval-block` memory for the full rationale.
 
 ## 6. Build & artifact
 

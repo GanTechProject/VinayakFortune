@@ -1,7 +1,7 @@
 ---
 title: VentureMiner AI Documentation Suite — Index
-version: v1.1
-date: 2026-07-20
+version: v1.2
+date: 2026-07-21
 author: VentureMiner AI Documentation Team
 status: Approved
 ---
@@ -10,8 +10,8 @@ status: Approved
 
 > **Project:** VentureMiner AI — AI Venture Intelligence Platform
 > **Suite version:** v1.0
-> **Last updated:** 2026-07-20
-> **Total documents:** 38 (Documents 00–37)
+> **Last updated:** 2026-07-21
+> **Total documents:** 39 (Documents 00–38)
 
 This directory contains the full documentation suite for VentureMiner AI, generated from the project requirements discussed in `ChatHistory.txt`. Every document exists in two forms:
 
@@ -87,13 +87,19 @@ This directory contains the full documentation suite for VentureMiner AI, genera
 | 36 | Sample Report Appendix | `09-Supplementary/36_sample_report_appendix.md` | `pdfs/09-Supplementary__36_sample_report_appendix.pdf` |
 | 37 | Onboarding & Activation Playbook | `09-Supplementary/37_onboarding_activation_playbook.md` | `pdfs/09-Supplementary__37_onboarding_activation_playbook.pdf` |
 
+### Operations (38+)
+
+| # | Document | Source | PDF |
+|---|---|---|---|
+| 38 | Phase C Post-Unblock Roadmap | `00-Governance/PHASE_C_POST_UNBLOCK_ROADMAP.md` | — |
+
 ## Document statistics
 
 | Metric | Value |
 |---|---|
-| Total documents | 38 |
-| Total Markdown source files | 38 |
-| Total generated PDFs | 38 |
+| Total documents | 39 |
+| Total Markdown source files | 39 |
+| Total generated PDFs | 38 (Document 38 has no PDF — see Open decisions) |
 | Total PDF size | ~720 KB |
 | Total estimated pages | 800+ |
 | Requirement IDs defined (PRD) | 174 |
@@ -158,3 +164,4 @@ This suite was authored in compliance with **Document 00 — Documentation Gover
 | v1.0 | 2026-07-20 | Doc Team | First complete suite (31 documents, Markdown + PDF). |
 | v1.1 | 2026-07-20 | Doc Team | Added 7 supplementary documents (31–37): Pricing, Sales, Support, Marketing, Compliance, Sample Report, Onboarding. |
 | v1.1.1 | 2026-07-20 | Doc Team | Front-matter version corrected from v1.0 to v1.1 to match the body's revision history (closes the README's own self-reference gap, analogous to the Doc 00 fix in PR #2). |
+| v1.2 | 2026-07-21 | Doc Team | Added "Operations (38+)" section + Document 38 (Phase C Post-Unblock Roadmap) so the suite is docs-lint-clean on day one of the post-unblock Phase C. PDF for Document 38 is intentionally absent — see Document 38's Open Decisions (DOC-OD-PHC-02). |
