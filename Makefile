@@ -1,4 +1,4 @@
-.PHONY: help smoke test lint hello-world-test hello-world-lint hello-world-build hello-world-run docker-build docker-up docker-down clean
+.PHONY: help smoke test lint hello-world-test hello-world-lint hello-world-build hello-world-run docker-build docker-up docker-down clean docs-lint
 
 SERVICE := hello-world
 
@@ -44,3 +44,12 @@ clean: ## Remove caches and build artifacts.
 	find . -type d -name __pycache__ -prune -exec rm -rf {} +
 	find . -type d -name .pytest_cache -prune -exec rm -rf {} +
 	find . -type d -name .ruff_cache -prune -exec rm -rf {} +
+
+
+# --- Docs ---------------------------------------------------------------------
+
+# Note: `make` (GNU Make) is not bundled with Git for Windows. CI runs on
+# ubuntu-latest where it is preinstalled. For local Windows dev, run
+# `python scripts/docs_lint_local.py` directly.
+docs-lint: ## Lint all docs via the local docs-lint workflow mirror.
+	python scripts/docs_lint_local.py
