@@ -1,50 +1,59 @@
 name: ci-hello-world
-
-  on:
-    pull_request:
-      branches: [main]
-    push:
-      branches: [main]
-
-  jobs:
-    test-lint-build:
-      name: test + lint + build
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
-
-        - name: Set up Python 3.11
-          uses: actions/setup-python@v5
-          with:
-            python-version: "3.11"
-            cache: "pip"
-            cache-dependency-path: services/hello-world/requirements-dev.txt
-
-        - name: Install dependencies
-          working-directory: services/hello-world
-          run: |
-            python -m pip install --upgrade pip
-            pip install -r requirements-dev.txt
-
-        - name: Run unit tests
-          working-directory: services/hello-world
-          run: python -m pytest app/ -v
-
-        - name: Run linter
-          working-directory: services/hello-world
-          run: python -m ruff check app/
-
-        - name: Build Docker image
-          run: docker build -t ventureminer/hello-world:ci-${{ github.sha }} services/hello-world/
-
-        - name: Smoke-test the image
-          run: |
-            NAME="hw-smoke-${{ github.run_id }}-${{ github.run_attempt }}"
-            docker run --rm -d --name "$NAME" -p 8000:8000 ventureminer/hello-world:ci-${{ github.sha }}
-            ok=0
-            for i in $(seq 1 30); do
-              if curl --fail --silent http://localhost:8000/healthz >/dev/null 2>&1 \
-                 && curl --fail --silent http://localhost:8000/readyz  >/dev/null 2>&1; then
-                ok=1
-                break
-              fi
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+jobs:
+  test-lint-build:
+    name: test + lint + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: services/hello-world/requirements-dev.txt
+      - name: Install dependencies
+        working-directory: services/hello-world
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Run unit tests
+        working-directory: services/hello-world
+        run: python -m pytest app/ -v
+      - name: Run linter
+        working-directory: services/hello-world
+        run: python -m ruff check app/
+      - name: Build Docker image
+        run: docker build -t ventureminer/hello-world:ci-${{ github.sha }} services/hello-world/
+      - name: Smoke-test the image
+        # The smoke test runs the image in detached mode with a unique
+        # name (so a leftover container from a previous failed run does
+        # not cause a name-collision failure) and polls the healthz +
+        # readyz endpoints until they answer (or 30 s elapses). The
+        # container is then stopped; if it already exited (e.g. a
+        # healthcheck failure inside the image) the stop is allowed to
+        # fail without failing the step, so the docker logs are
+        # preserved in the CI output for debugging.
+        run: |
+          NAME="hw-smoke-${{ github.run_id }}-${{ github.run_attempt }}"
+          docker run --rm -d --name "$NAME" -p 8000:8000 ventureminer/hello-world:ci-${{ github.sha }}
+          ok=0
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://localhost:8000/healthz >/dev/null 2>&1 \
+               && curl --fail --silent http://localhost:8000/readyz  >/dev/null 2>&1; then
+              ok=1
+              break
+            fi
+            sleep 1
+          done
+          docker logs "$NAME" || true
+          docker stop  "$NAME" || true
+          if [ "$ok" -ne 1 ]; then
+            echo "::error::hello-world image did not become healthy within 30 s"
+            exit 1
+          fi
+          echo "OK: /healthz and /readyz both answered"
