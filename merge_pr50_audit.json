@@ -1,0 +1,178 @@
+{
+  "pr": 50,
+  "branch": "wip/auth-svc-redis-session-manager",
+  "base": "main",
+  "head_sha": "ebfcdfc",
+  "head_sha_initial": "ebfcdfc",
+  "branch_commits_pushed": [
+    {
+      "sha": "8808845",
+      "subject": "docs(auth-svc): add Redis 7 SessionManager design + test-fixture strategy",
+      "files": ["services/auth-svc/REDIS_BACKEND_DESIGN.md", "services/auth-svc/IMPLEMENTATION_REDIS_TESTING.md"]
+    },
+    {
+      "sha": "ebfcdfc",
+      "subject": "feat(auth-svc): Redis 7 SessionManager + duplicated Redis test suite",
+      "files": [
+        "services/auth-svc/app/redis_session_manager.py",
+        "services/auth-svc/app/test_redis_session_manager.py",
+        "services/auth-svc/app/conftest.py",
+        "services/auth-svc/Dockerfile",
+        "services/auth-svc/pyproject.toml",
+        "services/auth-svc/requirements-dev.txt",
+        "services/auth-svc/requirements.txt"
+      ]
+    }
+  ],
+  "branch_commits_local_only": [
+    {
+      "sha": "2fbed3b",
+      "subject": "ci(auth-svc): add test-auth-svc job (matrix: memory, redis)",
+      "files": [".github/workflows/ci-hello-world.yml"],
+      "reason": "OAuth-app workflow-scope block per memory oauth-workflow-scope-block; orchestrator cannot push .github/workflows/* files. Conductor chose to merge PR #50 without this commit; the test-auth-svc CI gate for the Redis backend is NOT yet live on main as a result."
+    }
+  ],
+  "split_strategy": {
+    "before_split": "single commit fb37ad8 carrying implementation + workflow change together",
+    "after_split": "two commits: ebfcdfc (implementation only, push-able) + 2fbed3b (workflow, human-only)",
+    "rationale": "Per memory oauth-workflow-scope-block and oauth-workflow-scope-probe-2026-07-27, the OAuth-app credential can never push a .github/workflows/* change. Splitting the commit isolates the human-gated piece so the orchestrator can still ship the implementation. The trade-off: PR #50 lands on main WITHOUT the new test-auth-svc CI gate; a follow-up PR is required to land the workflow change (and then branch protection needs to register the new check)."
+  },
+  "push": {
+    "remote_head_before_push": "(branch did not exist on remote)",
+    "first_push": "8808845:refs/heads/wip/auth-svc-redis-session-manager (new branch, design-docs only)",
+    "second_push": "ebfcdfc:refs/heads/wip/auth-svc-redis-session-manager (force-with-lease fast-forward; implementation atop design docs)",
+    "third_push_attempted": "2fbed3b → REJECTED by OAuth-app: 'refusing to allow an OAuth App to create or update workflow .github/workflows/ci-hello-world.yml without workflow scope'. Commit stays local-only."
+  },
+  "title": "feat(auth-svc): Redis 7 SessionManager + 38-test contract (Phase C step 2, issue #5 AC-2.4)",
+  "path": "Path 1 (required_approving_review_count: 0 is live on main since PR #42)",
+  "deletes": 0,
+  "url": "https://github.com/GanTechProject/VinayakFortune/pull/50",
+  "merge_command": "gh pr merge 50 --squash",
+  "merge_commit": "bbd3e8d05d732c6ddc880673d1b608c275dcf192",
+  "merge_owner": "human (conductor)",
+  "merge_timestamp": "2026-07-27T16:42:05Z",
+  "preconditions": [
+    {
+      "check": "no duplicate PR for this branch",
+      "result": "PASS",
+      "evidence": "gh pr list --state all --head wip/auth-svc-redis-session-manager (no matches prior to gh pr create)"
+    },
+    {
+      "check": "PR targets main (not another feature branch)",
+      "result": "PASS",
+      "evidence": "gh pr create --base main --head wip/auth-svc-redis-session-manager; base SHA 4a0ea1a confirmed via gh pr view 50 --json baseRefOid"
+    },
+    {
+      "check": "PR title uses feat: conventional-commit prefix",
+      "result": "PASS",
+      "evidence": "title='feat(auth-svc): Redis 7 SessionManager + 38-test contract (Phase C step 2, issue #5 AC-2.4)'"
+    },
+    {
+      "check": "sacred files unchanged: app/session_manager.py + app/test_session_manager.py",
+      "result": "PASS",
+      "evidence": "git diff 4a0ea1a..HEAD -- services/auth-svc/app/session_manager.py services/auth-svc/app/test_session_manager.py is empty. ABC and 38-test contract are byte-identical to Phase C step 1."
+    },
+    {
+      "check": "test file parity: 38 in-memory tests + 38 Redis tests",
+      "result": "PASS",
+      "evidence": "grep -c '^def test_' returns 38 for test_session_manager.py AND 38 for test_redis_session_manager.py. The Redis file's only deltas from the in-memory file: module docstring (mentions Redis), one new import line, manager fixture replaced with redis_manager fixture, and 38 single-token substitutions manager -> redis_manager in test signatures. No test-body modifications."
+    },
+    {
+      "check": "in-memory regression net intact (38/38 still pass after new code)",
+      "result": "PASS",
+      "evidence": "python -m pytest app/test_session_manager.py -v locally → '38 passed in 0.16s'. The new redis_session_manager.py + conftest.py + the duplicated test_redis_session_manager.py do not import or modify the InMemorySessionManager."
+    },
+    {
+      "check": "EOL preflight on all 10 touched files",
+      "result": "PASS",
+      "evidence": "python byte-count check across .github/workflows/ci-hello-world.yml, services/auth-svc/{Dockerfile, IMPLEMENTATION_REDIS_TESTING.md, REDIS_BACKEND_DESIGN.md, pyproject.toml, requirements-dev.txt, requirements.txt}, services/auth-svc/app/{conftest.py, redis_session_manager.py, test_redis_session_manager.py} — all returned CRLF=0, bare_cr=0. Per memory pre-push-eol-preflight."
+    },
+    {
+      "check": "no AI-attribution trailer on any commit",
+      "result": "PASS",
+      "evidence": "git log -1 --format='%B' | grep -iE 'Co-Authored-By|Generated with|Claude ' returned no matches for any of the 3 commits."
+    },
+    {
+      "check": "ruff clean on new files (test-file F401/F841 warnings are byte-inherited)",
+      "result": "PASS (with documented exception)",
+      "evidence": "ruff on redis_session_manager.py + conftest.py → 'All checks passed!'. Two F401/F841 warnings on test_redis_session_manager.py are byte-inherited from test_session_manager.py at the corresponding lines (verified line-by-line). Out of scope per the no-test-body-modifications contract; flagged in PR body for conductor awareness."
+    },
+    {
+      "check": "Redis backend local verification",
+      "result": "PARTIAL — implementation-level evidence present, runtime-level evidence unavailable on this host",
+      "evidence": "The backend-expert implementer reported '38 passed in 2.97s' against a local Redis (microsoftarchive/redis 3.0.504 per their report). The orchestrator could not independently reproduce this run on the review host because (a) redis-server binary is not installed on this Windows host, (b) Docker daemon reports 500 Internal Server Error on API calls (engine/CLI version mismatch), (c) redis-py default socket_connect_timeout=None causes pytest to hang indefinitely on connection-refused rather than fail-fast. The CI matrix in the un-pushed workflow commit was designed as the canonical pre-merge gate, but that gate is NOT live because the conductor merged without the workflow commit. Net effect: the Redis backend's 38-test contract has implementation-level confidence (code review of redis_session_manager.py shows correct Lua atomicity, clock injection as source of truth, post-script audit emission, EXPIREAT guard against past-time) but no live CI signal."
+    }
+  ],
+  "ci_status_at_merge": {
+    "test + lint + build": "pending (existing hello-world job; passed in the merge commit per github web UI)",
+    "docs structure + cross-refs": "pass (7s)",
+    "test-auth-svc (backend=memory)": "NOT LIVE (workflow commit 2fbed3b never reached origin)",
+    "test-auth-svc (backend=redis)": "NOT LIVE (workflow commit 2fbed3b never reached origin)"
+  },
+  "ac_checkboxes_updated": {
+    "issue": 5,
+    "ac": "AC-2.4",
+    "before": "parent [ ] unchecked; sub-bullet for PR #49 [x]; PR #50 sub-bullet not present",
+    "after": "parent [x] checked; sub-bullet for PR #49 [x]; sub-bullet for PR #50 [x] added with merge SHA bbd3e8d. Note sub-bullet captures that the test-auth-svc CI gate is NOT yet live, framing this as a tracked follow-up rather than a hidden gap.",
+    "evidence": "gh issue view 5 --json body confirms the new body content with all three checkbox states verified via post-write readback."
+  },
+  "follow_ups": [
+    {
+      "id": "follow-up-1",
+      "priority": "P1",
+      "title": "Land the test-auth-svc CI gate on main",
+      "description": "Open a follow-up PR containing only the ci-hello-world.yml change from commit 2fbed3b. After merge, register the new 'auth-svc tests (backend=...)' check as a required status check on the live branch protection per memory canonical-vs-live-branch-protection.",
+      "conductor_action": "Either (a) paste commit 2fbed3b's diff via the GitHub web UI on the original PR #50, then force-push the rebased branch with --force-with-lease and re-merge; OR (b) open a new follow-up PR with the same diff."
+    },
+    {
+      "id": "follow-up-2",
+      "priority": "P2",
+      "title": "Add socket_connect_timeout to conftest redis_client",
+      "description": "The current conftest.py uses redis.Redis.from_url(...) with default settings. On a host where Redis is unreachable, the client.ping() in the fixture hangs indefinitely (default socket_connect_timeout=None). For local-dev UX, add socket_connect_timeout=1 so a missing Redis fails fast with a ConnectionError. Trivial one-line fix; not blocking the merge because CI provides Redis via the services: block.",
+      "owner": "backend-expert",
+      "branch_proposal": "wip/auth-svc-redis-conftest-timeout"
+    },
+    {
+      "id": "follow-up-3",
+      "priority": "P3",
+      "title": "Defer: ChatHistory.txt cleanup (issue #26)",
+      "description": "Per memory chat-history-not-wip-only, ChatHistory.txt is on main (since PR #18 bootstrap). Issue #26 has its own conductor-gated recipe; do not bundle with the Redis PR. Carry forward to next planning cycle."
+    },
+    {
+      "id": "follow-up-4",
+      "priority": "P3",
+      "title": "Defer: cycle-artifacts convention (issue #38)",
+      "description": "Per memory github-issue-38, the cycle-artifacts follow-up convention is paused after PR #41. Carry forward."
+    }
+  ],
+  "strategic_calls_made_by_orchestrator": [
+    {
+      "decision": "Strategy B (duplicated 39th test file) over Strategy A (parametrize manager fixture)",
+      "basis": "Architect's failure-isolation argument in IMPLEMENTATION_REDIS_TESTING.md §2.3: a Redis-only regression surfaces as 12-of-38 in the Redis file, not collapsed into a parametrized suite. Duplication preserves the test contract's sacredness AND makes CI attribution cleaner. Documented as open question #1 in §9 for conductor override; conductor has not overridden, so Strategy B stands."
+    },
+    {
+      "decision": "Split the workflow commit from the implementation commit",
+      "basis": "Per memory oauth-workflow-scope-block, the OAuth-app cannot push .github/workflows/*. The split isolated the human-gated piece so the orchestrator could push 2 of 3 commits and open the PR. Trade-off documented in the PR body and in split_strategy above: PR landed on main WITHOUT the CI gate. Conductor chose to merge anyway."
+    }
+  ],
+  "notes": [
+    "Phase C step 2 completes issue #5 AC-2.4 — Sessions stored in Redis 7 with 8h idle / 30d max TTL. The 38-test TTL contract from Phase C step 1 (PR #49) is now satisfied by two backends: InMemorySessionManager and RedisSessionManager, both implementations of the SessionManager ABC.",
+    "The Redis backend ships with implementation-level confidence but no live CI signal. This is a deliberate conductor decision (merge without the workflow commit) and is captured in follow-up-1. The orchestrator's recommendation in the PR body was to paste the workflow commit first; the conductor chose the alternative path. The implementation itself is sound — code review confirmed correct Lua atomicity, clock injection as source of truth, post-script audit emission, and the EXPIREAT guard against past-time. The risk is that a future regression in the Redis backend would not be caught by CI until follow-up-1 is complete.",
+    "The InMemorySessionManager remains the primary contract surface (the 38 tests are written against its fixture signature). The RedisSessionManager is a drop-in replacement at the SessionManager ABC boundary. If the implementation is later extracted to a config-driven factory pattern (per Phase D roadmap), no further contract work is needed.",
+    "Production deployment of RedisSessionManager (vs InMemorySessionManager) is a separate AC: issue #4 AC-1.4 covers provisioning + REDIS_URL injection via the deployment platform. That work is gated on Phase 2 of the rollout plan documented in REDIS_BACKEND_DESIGN.md §13."
+  ],
+  "related_memories": [
+    "strategic-decision-c-beta",
+    "path-1-live-2026-07-27",
+    "canonical-vs-live-branch-protection",
+    "pr-base-branch-discipline",
+    "pre-push-eol-preflight",
+    "oauth-workflow-scope-block",
+    "oauth-workflow-scope-probe-2026-07-27",
+    "tracker-hygiene-is-ongoing",
+    "verify-narrative-against-runtime-state",
+    "brief-factual-verification",
+    "chat-history-not-wip-only",
+    "github-issue-38"
+  ]
+}

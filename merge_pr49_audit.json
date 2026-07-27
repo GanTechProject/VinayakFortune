@@ -1,0 +1,85 @@
+{
+  "pr": 49,
+  "branch": "wip/auth-svc-session-manager",
+  "base": "main",
+  "head_sha": "9e662b9",
+  "head_sha_initial": "273c959",
+  "rebase": {
+    "rebased_from": "c9a7470 (wip branch fork point)",
+    "rebased_onto": "7514c00 (main HEAD post-unblock)",
+    "picks": ["599da41", "c9a7470", "5f65fd4", "273c959"],
+    "post_rebase_shas": ["e0b8aa4", "6807739", "dc7ef31", "9e662b9"],
+    "conflicts_resolved": {
+      "files": ["services/auth-svc/.dockerignore", "services/auth-svc/Dockerfile", "services/auth-svc/pyproject.toml"],
+      "resolution": "take origin/main's canonical versions (they shipped with the path-1 cycle's PR #42 / #44 / #48 scaffold under the workflows gate)",
+      "auto_merged": ["services/auth-svc/app/__init__.py"]
+    }
+  },
+  "amend_after_rebase": {
+    "commit": "9e662b9",
+    "reason": "The test-fix commit dc7ef31 contained an off-by-one arithmetic bug (target = timedelta(days=29) - timedelta(hours=1), but clock() returns datetime, so the loop raised TypeError on first iteration). The corrected form uses s.created_at + timedelta(days=29) - timedelta(hours=1) so the comparison is datetime < datetime, not datetime < timedelta. The implementer had hand-amended this into 9e662b9 as part of going GREEN; verified via pytest 38/38 GREEN + od -c EOL preflight clean (CRLF=0)."
+  },
+  "push": {
+    "remote_head_before_push": "c9a7470 (wip fork point on remote)",
+    "first_push": "c9a7470..273c959 (fast-forward; 2 commits: test-fix + implementation)",
+    "force_with_lease": "273c959..9e662b9 (rewritten history after rebase + amend; 4 rebased commits; used --force-with-lease per pre-push-eol-preflight)"
+  },
+  "title": "feat(auth-svc): InMemorySessionManager + 38-test TTL contract (Phase C step 1)",
+  "path": "Path 1 (required_approving_review_count: 0 is live on main since PR #42)",
+  "deletes": 0,
+  "url": "https://github.com/GanTechProject/VinayakFortune/pull/49",
+  "preconditions": [
+    {
+      "check": "branch was clean ahead of remote by exactly 2 commits on first push",
+      "result": "PASS (local 273c959, remote c9a7470; +2)",
+      "evidence": "git ls-remote origin wip/auth-svc-session-manager (pre-rebase)"
+    },
+    {
+      "check": "no duplicate PR for this branch",
+      "result": "PASS",
+      "evidence": "gh pr list --state all --head wip/auth-svc-session-manager"
+    },
+    {
+      "check": "PR targets main (not another feature branch)",
+      "result": "PASS",
+      "evidence": "gh pr create --base main"
+    },
+    {
+      "check": "PR title uses feat: conventional-commit prefix",
+      "result": "PASS",
+      "evidence": "title='feat(auth-svc): InMemorySessionManager + 38-test TTL contract (Phase C step 1)'"
+    },
+    {
+      "check": "rebase onto origin/main cleanly (no merge commit needed)",
+      "result": "PASS — 3 add/add scaffold files resolved by taking main's canonical; app/__init__.py auto-merged",
+      "evidence": "git rebase origin/main; resolved to e0b8aa4..9e662b9 linearly"
+    },
+    {
+      "check": "EOL preflight on both changed files (CRLF=0, LF-only)",
+      "result": "PASS",
+      "evidence": "python -c on services/auth-svc/app/session_manager.py (CRLF=0) and services/auth-svc/app/test_session_manager.py (CRLF=0)"
+    },
+    {
+      "check": "all 38 tests in services/auth-svc/app/test_session_manager.py pass GREEN against the implementation",
+      "result": "PASS",
+      "evidence": "pytest -q → 38 passed in 0.22s. The dc7ef31 buggy target=timedelta(...) form raised TypeError on iteration 1; the amended 9e662b9 form uses s.created_at + timedelta(days=29) - timedelta(hours=1) so the comparison is datetime < datetime, and the loop land-position lands exactly at created_at + 29d - 1h, after which a 1h advance puts the clock at created_at + 29d with idle=1h (fresh) and 1d before expires_at."
+    }
+  ],
+  "deletes_applied": [],
+  "merge_command": "gh pr merge 49 --squash",
+  "merge_owner": "human (conductor)",
+  "notes": [
+    "Path 1 means the DELETE step is gone: required_approving_review_count: 0 was installed on the live branch protection by PR #42's cycle. The PR-REQUIRED and CI-REQUIRED gates remain, but the approval gate is structurally satisfied (0 approvals are trivially met).",
+    "The architect's first test-fix attempt (dc7ef31) had an off-by-one arithmetic error: target = timedelta(days=29) - timedelta(hours=1) compared against clock() which returns datetime, not a Duration. The bug was caught locally BEFORE push to the rebased PR (per pre-push-eol-preflight discipline extended to include pytest) and corrected into the implementation commit 9e662b9 instead of leaving a broken commit on the PR. 38/38 GREEN verified.",
+    "Implementation audit: single threading.Lock over all read-modify-write; audit emission after lock release; get never emits; revoke_all emits a single event with count payload; idle-expired uses strict '>' and max-expired uses '>=' (matches ABC at app/session_manager.py:160-164).",
+    "Rebase-the-wip-branch convention: the wip branch was forked at c9a7470 (BEFORE the post-unblock merges on main: PRs #42, #44, #46, #47, #48). Rebasing onto 7514c00 linearizes the PR's history so reviewers see only the in-flight deltas, not the divergence noise. The three scaffold files (.dockerignore, Dockerfile, pyproject.toml) had add/add conflicts against main's canonical versions; main's versions were taken since they represent the canonical service scaffold under the workflows gate.",
+    "Phase C step 1 boundary: this is the INTERFACE + IN-MEMORY BACKEND. The Redis 7 production backend will satisfy the same test file (per the test file's header docstring at lines 8-13) and is a separate PR."
+  ],
+  "related_memories": [
+    "strategic-decision-c-beta",
+    "path-1-live-2026-07-27",
+    "canonical-vs-live-branch-protection",
+    "pr-base-branch-discipline",
+    "pre-push-eol-preflight"
+  ]
+}
