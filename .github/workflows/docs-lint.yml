@@ -1,0 +1,83 @@
+name: docs-lint
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  lint:
+    name: docs structure + cross-refs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify all docs have front-matter
+        run: |
+          python - <<'PY'
+          import re, sys, pathlib
+          root = pathlib.Path("docs")
+          failures = []
+          for md in sorted(root.rglob("*.md")):
+              text = md.read_text(encoding="utf-8")
+              if not re.match(r"^---\n.*?\n---\n", text, re.DOTALL):
+                  failures.append(f"missing front-matter: {md}")
+          if failures:
+              print("FAIL:")
+              for f in failures: print(f"  - {f}")
+              sys.exit(1)
+          print(f"OK: {sum(1 for _ in root.rglob('*.md'))} docs all have front-matter")
+          PY
+      - name: Verify each doc has the canonical Revision history subsection
+        run: |
+          python - <<'PY'
+          import re, sys, pathlib
+          root = pathlib.Path("docs")
+          failures = []
+          # Every doc except the index README must contain a subsection
+          # heading that matches the canonical form used by the docs
+          # governance (see Document 00 §15 Quality Checklist). The
+          # canonical form is h3, lower-case "history":
+          #   "### <n>.<m> Revision history"
+          # nested under an "Appendix" h2 section. Document 00 (the
+          # governance doc) also satisfies this via "### 11.2 Revision
+          # history table" -- the h2 form "## 19. Revision History" on
+          # that same doc is treated as a bonus, not a substitute.
+          # The README.md index is exempt.
+          h3_re = re.compile(r"^### \d+(\.\d+)*\.?\s+Revision history\b", re.MULTILINE)
+          doc_count = 0
+          for md in sorted(root.rglob("*.md")):
+              if md.name == "README.md":
+                  continue
+              doc_count += 1
+              text = md.read_text(encoding="utf-8")
+              if not h3_re.search(text):
+                  failures.append(f"missing canonical revision-history subsection: {md}")
+          if failures:
+              print("FAIL: docs missing '### <n>.<m> Revision history' subsection:")
+              for f in failures: print(f"  - {f}")
+              sys.exit(1)
+          print(f"OK: all {doc_count} docs have the canonical revision-history subsection")
+          PY
+      - name: Verify all docs are linked from the index
+        run: |
+          python - <<'PY'
+          import re, sys, pathlib
+          index = pathlib.Path("docs/README.md").read_text(encoding="utf-8")
+          root = pathlib.Path("docs")
+          orphans = []
+          for md in sorted(root.rglob("*.md")):
+              if md.name == "README.md": continue
+              rel = md.relative_to(root)
+              stem = md.stem
+              if stem not in index and str(rel) not in index:
+                  orphans.append(str(rel))
+          if orphans:
+              print("FAIL: orphan docs not linked from docs/README.md:")
+              for o in orphans: print(f"  - {o}")
+              sys.exit(1)
+          print("OK: no orphan docs")
+          PY
