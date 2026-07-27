@@ -9,6 +9,7 @@ description = "Auth service for VentureMiner AI — local subset (in-memory sess
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.8",
+    "redis>=5.0,<6.0",
 ]
 
 [project.optional-dependencies]
