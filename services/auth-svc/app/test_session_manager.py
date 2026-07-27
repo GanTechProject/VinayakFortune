@@ -211,23 +211,46 @@ def test_refresh_returns_none_for_max_expired(manager: SessionManager, clock: Fa
 
 
 def test_refresh_after_29d_still_succeeds(manager: SessionManager, clock: FakeClock) -> None:
-    """A session that's been active for 29d is still valid as long as the idle window is fresh."""
+    """A session near its absolute max is still refreshable as long as the idle window is fresh.
+
+    An actively-used session (refreshed every 7h, well under the 8h
+    idle TTL) reaches t = 29d with idle = 7h (fresh) and 1d before
+    expires_at. The test asserts that refresh at t = 29d succeeds,
+    proving the absolute max does NOT fire prematurely while the
+    idle window is fresh.
+    """
     s = manager.create_session(uuid4())
-    clock.advance(timedelta(days=29))
-    # idle window is 29d - 0 = fresh; refresh succeeds
+    # Refresh every 7h up to t = 29d, keeping the idle window fresh.
+    while clock() + timedelta(hours=7) < s.expires_at - timedelta(hours=1):
+        clock.advance(timedelta(hours=7))
+        refreshed = manager.refresh_session(s.session_id)
+        assert refreshed is not None  # sanity: all intervening refreshes succeed
+    # Now at t < 29d, idle = 7h (fresh). Refresh at t = 29d succeeds.
+    clock.advance(timedelta(hours=7))  # final advance to t = 29d
     refreshed = manager.refresh_session(s.session_id)
     assert refreshed is not None
     assert refreshed.last_used_at == clock()
 
 
 def test_refresh_at_29d_23h_succeeds_then_max_expires(manager: SessionManager, clock: FakeClock) -> None:
-    """At 29d23h, refresh succeeds (idle window fresh). After 8h more, max-expiry kicks in."""
+    """At 29d23h (idle fresh), refresh succeeds. After 8h more, max-expiry kicks in.
+
+    An actively-used session reaches t = 29d23h with idle = 1h
+    (fresh) and 1h before expires_at. Refresh succeeds at this
+    state. After advancing another 8h, now = 30d7h > expires_at,
+    so the absolute max fires and both refresh and get return None.
+    """
     s = manager.create_session(uuid4())
-    clock.advance(timedelta(days=29, hours=23))
-    # 29d23h: idle window 29d23h - 0 = fresh; refresh succeeds
-    assert manager.refresh_session(s.session_id) is not None
-    # After refresh, last_used_at = 29d23h
-    # Advance another 8h: now = 30d7h, which is > 30d = max-expired
+    # Refresh every 7h up to just before expires_at, keeping the idle window fresh.
+    while clock() + timedelta(hours=7) < s.expires_at - timedelta(hours=1):
+        clock.advance(timedelta(hours=7))
+        refreshed = manager.refresh_session(s.session_id)
+        assert refreshed is not None  # sanity: all intervening refreshes succeed
+    # Advance 1h so the next refresh has idle = 1h (fresh) and is 1h before expires_at.
+    clock.advance(timedelta(hours=1))
+    refreshed = manager.refresh_session(s.session_id)
+    assert refreshed is not None
+    # After the refresh, last_used_at = 29d23h. Advance 8h: now = 30d7h, past expires_at.
     clock.advance(timedelta(hours=8))
     assert manager.refresh_session(s.session_id) is None
     assert manager.get_session(s.session_id) is None
