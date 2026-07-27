@@ -1,0 +1,77 @@
+{
+  "pr": 51,
+  "branch": "chore/archive-cycle-artifacts-issue-38",
+  "base": "main",
+  "head_sha": "c52b210",
+  "head_sha_initial": "c52b210",
+  "rebase": null,
+  "push": {
+    "remote_head_before_push": "(branch did not exist on remote)",
+    "first_push": "c52b210:refs/heads/chore/archive-cycle-artifacts-issue-38 (new branch, single commit)"
+  },
+  "title": "chore(archive): commit retroactive cycle artifacts + archive doc (closes #38)",
+  "path": "Path 1 (required_approving_review_count: 0 is live on main since PR #42)",
+  "deletes": 0,
+  "url": "https://github.com/GanTechProject/VinayakFortune/pull/51",
+  "preconditions": [
+    {
+      "check": "branch was clean ahead of remote by exactly 1 commit on first push",
+      "result": "PASS",
+      "evidence": "git ls-remote origin chore/archive-cycle-artifacts-issue-38 (pre-push) returned nothing; post-push shows c52b210 at HEAD"
+    },
+    {
+      "check": "no duplicate PR for this branch",
+      "result": "PASS",
+      "evidence": "gh pr list --state all --head chore/archive-cycle-artifacts-issue-38 → empty"
+    },
+    {
+      "check": "PR targets main (not another feature branch)",
+      "result": "PASS",
+      "evidence": "gh pr create --base main --head chore/archive-cycle-artifacts-issue-38"
+    },
+    {
+      "check": "PR title uses chore(archive): conventional-commit prefix",
+      "result": "PASS",
+      "evidence": "title='chore(archive): commit retroactive cycle artifacts + archive doc (closes #38)'"
+    },
+    {
+      "check": "EOL preflight on all 7 staged files (CRLF=0, LF-only)",
+      "result": "PASS",
+      "evidence": "for f in merge_pr41_audit.json merge_pr42_audit.json merge_pr49_audit.json merge_pr50_audit.json scripts/cycle_artifacts_archived.md scripts/merge_pr41_cycle.sh scripts/merge_pr42_cycle.sh: tr -cd '\\r' < $f | wc -c → 0 for each"
+    },
+    {
+      "check": "PR body has no AI-attribution trailer (project rule)",
+      "result": "PASS",
+      "evidence": "gh pr edit 51 stripped the 'Generated with Claude Code' trailer in the second pass; final body has no Co-Authored-By / Generated with line"
+    },
+    {
+      "check": "no workflow files staged (OAuth-app scope block would reject push)",
+      "result": "PASS",
+      "evidence": "git diff --cached --stat shows no paths under .github/workflows/; only audit JSON + cycle scripts + the archive doc"
+    },
+    {
+      "check": "branch protection accepts the new HEAD (Path 1 + 2 required status checks)",
+      "result": "PASS",
+      "evidence": "gh pr checks 51 → 'test + lint + build' PASS (27s) + 'docs structure + cross-refs' PASS (9s); MERGEABLE=true; no conflicts"
+    }
+  ],
+  "deletes_applied": [],
+  "merge_command": "gh pr merge 51 --squash (executed by human/conductor)",
+  "merge_owner": "human (conductor)",
+  "notes": [
+    "Decision (per issue #38): ARCHIVE the cycle-artifacts convention. Path 1 (PR #42) eliminated the DELETE/PUT dance; PRs #43-#48 all merged through real CI without a cycle. The convention had structurally paused; this PR + the archive doc at scripts/cycle_artifacts_archived.md record the pause as deliberate.",
+    "Renumbering note: prior memory pr50-merged-without-workflow-2026-07-27 expected the workflow paste to land as PR #51. PR #51 is actually this archive (orchestrator opened it first under the autonomy directive). The workflow paste will land as PR #52+ after merge. The prior memory has been updated to reflect this.",
+    "Sacred files preserved: app/session_manager.py and app/test_session_manager.py untouched on main (verified via git diff main@e92c1e6 main@bbd3e8d -- services/auth-svc/app/session_manager.py services/auth-svc/app/test_session_manager.py → empty diff).",
+    "Why this is a meaningful PR even though it adds no product code: the cycle-artifacts convention was a structural pattern documented in 3 places (option3-cycle-script-template memory, github-issue-38 memory, several .gitignore rules). Removing it from the convention without recording WHY would have left future operators in the dark. The archive doc captures: (a) why it existed, (b) when it ended, (c) what replaced it, (d) how to resurrect it if a similar block ever returns.",
+    "Issue #38 was auto-closed by 'closes #38' in the PR title (GitHub's auto-close-on-merge behavior). The AC checkboxes on issue #38 were already marked checked in the archive doc itself (scripts/cycle_artifacts_archived.md has the explicit AC-1/AC-2/AC-3 disposition table); no separate gh issue edit is needed.",
+    "What did NOT change: live branch protection still has 2 required status checks ('test + lint + build' + 'docs structure + cross-refs'). The test-auth-svc workflow paste is still pending the conductor's human-side action (OAuth scope block). Once that PR (#52+) lands and merges, a separate ingest will register the new context."
+  ],
+  "related_memories": [
+    "path-1-live-2026-07-27",
+    "oauth-workflow-scope-block",
+    "option3-cycle-script-template",
+    "tracker-hygiene-is-ongoing",
+    "github-issue-38",
+    "pr51-archive-cycle-artifacts-2026-07-27"
+  ]
+}
