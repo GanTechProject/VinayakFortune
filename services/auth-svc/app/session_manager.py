@@ -1,22 +1,14 @@
 """SessionManager interface for auth-svc.
 
-This file ships the abstract base class (the contract) and the Session
-Pydantic model. The InMemorySessionManager concrete class is a
-follow-up that the implementer writes to make the RED test spec pass.
-
 See DESIGN.md for the full design rationale, the TTL semantics, the
 concurrency model, and the audit-event contract.
-
-This module deliberately ships the ABC ONLY (no concrete class). The
-import path is stable; the implementer's job is to add
-`InMemorySessionManager` to this module without changing the public
-API of `SessionManager`.
 """
 
 from __future__ import annotations
 
 import abc
 import logging
+import threading
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
@@ -25,143 +17,134 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
-# ---------------------------------------------------------------------------
-# Constants — TTL ceilings from Document 02 §5.5
-# ---------------------------------------------------------------------------
-
-IDLE_TTL: timedelta = timedelta(hours=8)        # 8h sliding window
-ABSOLUTE_TTL: timedelta = timedelta(days=30)    # 30d absolute ceiling
-MAX_INITIAL_TTL: timedelta = IDLE_TTL           # the `ttl` parameter to create_session is capped at 8h
-
-
-# ---------------------------------------------------------------------------
-# Session data model
-# ---------------------------------------------------------------------------
+IDLE_TTL: timedelta = timedelta(hours=8)
+ABSOLUTE_TTL: timedelta = timedelta(days=30)
+MAX_INITIAL_TTL: timedelta = IDLE_TTL
 
 
 class Session(BaseModel):
-    """An authenticated user session, identified by an opaque session_id.
-
-    See DESIGN.md §3 for invariants and lifecycle.
-    """
-
     session_id: UUID
     user_id: UUID
     created_at: datetime
     expires_at: datetime
     last_used_at: datetime
     metadata: dict[str, Any] = Field(default_factory=dict)
-
-    model_config = {"frozen": False}  # the manager mutates last_used_at on get/refresh
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+    model_config = {"frozen": False}
 
 
 def _default_clock() -> datetime:
-    """Return the current UTC time.
-
-    The default clock. Tests inject a fake clock to make TTL behavior
-    deterministic. The clock must return a *tz-aware* UTC datetime so
-    arithmetic against `created_at` (also tz-aware) does not raise.
-    """
     return datetime.now(timezone.utc)
 
 
 def _default_audit_sink(event_code: str, payload: dict[str, Any]) -> None:
-    """Default audit sink: log at INFO. Production swaps this for a durable sink."""
-    logging.getLogger("auth_svc.audit").info(
-        "auth.audit event=%s payload=%s", event_code, payload
-    )
-
-
-# ---------------------------------------------------------------------------
-# SessionManager — the contract every backend must satisfy
-# ---------------------------------------------------------------------------
+    logging.getLogger("auth_svc.audit").info("auth.audit event=%s payload=%s", event_code, payload)
 
 
 class SessionManager(abc.ABC):
-    """The contract every session-manager backend must satisfy.
-
-    All methods are thread-safe. The in-memory backend uses a single
-    `threading.Lock`; the Redis backend (out of scope) will use a
-    per-session Lua script. Both backends must produce the same
-    observable behavior under the RED test spec in DESIGN.md §10.
-
-    The interface is sync. The eventual FastAPI service is async; the
-    HTTP layer wraps calls in `asyncio.to_thread` if the backend is
-    sync. See DESIGN.md §12.1 for the open question on async vs sync.
-    """
-
-    def __init__(
-        self,
-        *,
-        clock: Callable[[], datetime] | None = None,
-        audit_sink: Callable[[str, dict[str, Any]], None] | None = None,
-        idle_ttl: timedelta = IDLE_TTL,
-        absolute_ttl: timedelta = ABSOLUTE_TTL,
-    ) -> None:
+    def __init__(self, *, clock=None, audit_sink=None, idle_ttl=IDLE_TTL, absolute_ttl=ABSOLUTE_TTL):
         self._clock = clock or _default_clock
         self._audit_sink = audit_sink or _default_audit_sink
         self._idle_ttl = idle_ttl
         self._absolute_ttl = absolute_ttl
 
-    # ----- lifecycle --------------------------------------------------------
-
     @abc.abstractmethod
-    def create_session(
-        self,
-        user_id: UUID,
-        *,
-        ttl: timedelta | None = None,
-        metadata: dict[str, Any] | None = None,
-    ) -> Session:
-        """Create a new session for `user_id`.
-
-        See DESIGN.md §5 for the full contract. Raises ValueError on
-        invalid inputs (None user_id, ttl <= 0, ttl > 8h).
-        """
-
+    def create_session(self, user_id, *, ttl=None, metadata=None): ...
     @abc.abstractmethod
-    def get_session(self, session_id: UUID) -> Session | None:
-        """Return the session if it exists and is not expired.
-
-        Updates last_used_at on a hit. Returns None on miss or any
-        kind of expiry. Does NOT raise on expiry.
-        """
-
+    def get_session(self, session_id): ...
     @abc.abstractmethod
-    def refresh_session(self, session_id: UUID) -> Session | None:
-        """Extend the idle window on an existing session.
-
-        Updates last_used_at. Returns the refreshed session, or None
-        if missing or expired. Does NOT extend expires_at.
-        """
-
+    def refresh_session(self, session_id): ...
     @abc.abstractmethod
-    def revoke_session(self, session_id: UUID) -> bool:
-        """Revoke a single session. Idempotent. Returns True on hit, False on miss."""
-
+    def revoke_session(self, session_id): ...
     @abc.abstractmethod
-    def revoke_all_for_user(self, user_id: UUID) -> int:
-        """Revoke every active session for `user_id`. Returns the count revoked."""
+    def revoke_all_for_user(self, user_id): ...
 
-    # ----- helpers exposed for concrete subclasses -------------------------
+    def _now(self): return self._clock()
+    def _emit(self, event_code, payload): self._audit_sink(event_code, payload)
+    def _is_idle_expired(self, session): return (self._now() - session.last_used_at) > self._idle_ttl
+    def _is_max_expired(self, session): return self._now() >= session.expires_at
+    def _new_session_id(self): return uuid.uuid4()
 
-    def _now(self) -> datetime:
-        return self._clock()
 
-    def _emit(self, event_code: str, payload: dict[str, Any]) -> None:
-        """Emit an audit event. Concrete subclasses call this after mutation."""
-        self._audit_sink(event_code, payload)
+class InMemorySessionManager(SessionManager):
+    def __init__(self, *, clock=None, audit_sink=None, idle_ttl=IDLE_TTL, absolute_ttl=ABSOLUTE_TTL):
+        super().__init__(clock=clock, audit_sink=audit_sink, idle_ttl=idle_ttl, absolute_ttl=absolute_ttl)
+        self._sessions = {}
+        self._by_user = {}
+        self._lock = threading.Lock()
 
-    def _is_idle_expired(self, session: Session) -> bool:
-        return (self._now() - session.last_used_at) > self._idle_ttl
+    def create_session(self, user_id, *, ttl=None, metadata=None):
+        if user_id is None:
+            raise ValueError("user_id is required")
+        if ttl is not None:
+            if ttl <= timedelta(0):
+                raise ValueError("ttl must be > 0")
+            if ttl > self._idle_ttl:
+                raise ValueError(f"ttl must be <= {self._idle_ttl}")
+        now = self._now()
+        session_id = self._new_session_id()
+        session = Session(session_id=session_id, user_id=user_id, created_at=now, expires_at=now + self._absolute_ttl, last_used_at=now, metadata=dict(metadata) if metadata else {})
+        with self._lock:
+            self._sessions[session_id] = session
+            self._by_user.setdefault(user_id, set()).add(session_id)
+        self._emit("session.created", {"session_id": str(session_id), "user_id": str(user_id)})
+        return session
 
-    def _is_max_expired(self, session: Session) -> bool:
-        return self._now() >= session.expires_at
+    def get_session(self, session_id):
+        with self._lock:
+            session = self._sessions.get(session_id)
+            if session is None:
+                return None
+            if self._is_idle_expired(session) or self._is_max_expired(session):
+                self._sessions.pop(session_id, None)
+                user_sids = self._by_user.get(session.user_id)
+                if user_sids is not None:
+                    user_sids.discard(session_id)
+                    if not user_sids:
+                        self._by_user.pop(session.user_id, None)
+                return None
+            now = self._now()
+            updated = session.model_copy(update={"last_used_at": now})
+            self._sessions[session_id] = updated
+            return updated
 
-    def _new_session_id(self) -> UUID:
-        return uuid.uuid4()
+    def refresh_session(self, session_id):
+        with self._lock:
+            session = self._sessions.get(session_id)
+            if session is None:
+                return None
+            if self._is_idle_expired(session) or self._is_max_expired(session):
+                self._sessions.pop(session_id, None)
+                user_sids = self._by_user.get(session.user_id)
+                if user_sids is not None:
+                    user_sids.discard(session_id)
+                    if not user_sids:
+                        self._by_user.pop(session.user_id, None)
+                return None
+            now = self._now()
+            updated = session.model_copy(update={"last_used_at": now})
+            self._sessions[session_id] = updated
+        self._emit("session.refreshed", {"session_id": str(session_id), "user_id": str(session.user_id)})
+        return updated
+
+    def revoke_session(self, session_id):
+        with self._lock:
+            session = self._sessions.pop(session_id, None)
+            if session is None:
+                return False
+            user_sids = self._by_user.get(session.user_id)
+            if user_sids is not None:
+                user_sids.discard(session_id)
+                if not user_sids:
+                    self._by_user.pop(session.user_id, None)
+        self._emit("session.revoked", {"session_id": str(session_id), "user_id": str(session.user_id)})
+        return True
+
+    def revoke_all_for_user(self, user_id):
+        with self._lock:
+            sids = self._by_user.pop(user_id, set())
+            for sid in sids:
+                self._sessions.pop(sid, None)
+            count = len(sids)
+        if count > 0:
+            self._emit("session.revoked_all_for_user", {"user_id": str(user_id), "count": count})
+        return count

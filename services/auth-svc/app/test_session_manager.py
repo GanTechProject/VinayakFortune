@@ -214,19 +214,26 @@ def test_refresh_after_29d_still_succeeds(manager: SessionManager, clock: FakeCl
     """A session near its absolute max is still refreshable as long as the idle window is fresh.
 
     An actively-used session (refreshed every 7h, well under the 8h
-    idle TTL) reaches t = 29d with idle = 7h (fresh) and 1d before
+    idle TTL) reaches t = 29d with idle = 1h (fresh) and 1d before
     expires_at. The test asserts that refresh at t = 29d succeeds,
     proving the absolute max does NOT fire prematurely while the
     idle window is fresh.
     """
     s = manager.create_session(uuid4())
-    # Refresh every 7h up to t = 29d, keeping the idle window fresh.
-    while clock() + timedelta(hours=7) < s.expires_at - timedelta(hours=1):
-        clock.advance(timedelta(hours=7))
+    # Target the moment the loop should settle at: 29d - 1h after created_at.
+    # Compute relative to the session's created_at so the FakeClock's
+    # start (2026-01-01 12:00 UTC) is irrelevant — we navigate by deltas.
+    target = s.created_at + timedelta(days=29) - timedelta(hours=1)
+    # Refresh every 7h, clamping the final step so the loop lands EXACTLY
+    # at clock = created_at + 29d - 1h, where last_used = clock and idle = 0.
+    while clock() < target:
+        next_step = min(timedelta(hours=7), target - clock())
+        clock.advance(next_step)
         refreshed = manager.refresh_session(s.session_id)
         assert refreshed is not None  # sanity: all intervening refreshes succeed
-    # Now at t < 29d, idle = 7h (fresh). Refresh at t = 29d succeeds.
-    clock.advance(timedelta(hours=7))  # final advance to t = 29d
+    # Now at clock = created_at + 29d - 1h, last_used = clock, idle = 0.
+    # Advance 1h: clock = created_at + 29d, idle = 1h (fresh), now < expires_at.
+    clock.advance(timedelta(hours=1))
     refreshed = manager.refresh_session(s.session_id)
     assert refreshed is not None
     assert refreshed.last_used_at == clock()
