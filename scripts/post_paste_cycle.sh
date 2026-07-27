@@ -17,7 +17,19 @@
 #      the commit that adds the workflow file itself -- the
 #      conductor must push a third (no-op) commit to trigger an
 #      actual run, per RUNBOOK_after_paste.md.) Verify with:
-#        gh api "repos/$REPO/commits?per_page=10" | jq -r '.[].check_runs[].name'
+#        sha=$(gh api "repos/$REPO/commits/main" --jq '.sha')
+#        gh api "repos/$REPO/commits/$sha/check-runs" \
+#          | python -c "import json,sys; print('\n'.join(sorted({c['name'] for c in json.load(sys.stdin)['check_runs']})))"
+#      This is the *job-name* check_run list, NOT the workflow
+#      name. The `required_status_checks.contexts` field matches
+#      against check_run names (job names) in the GraphQL merge
+#      gate's `statusCheckRollup.contexts.nodes` array, NOT
+#      workflow names. Using workflow names (e.g. `ci-hello-world`,
+#      `docs-lint`) is a known merge-blocker trap: the API
+#      accepts the PUT but the merge then fails with
+#      "GraphQL: N of N required status checks are expected
+#      (mergePullRequest)" because the rollup only contains
+#      check_run nodes, not workflow-level check_suite nodes.
 #      (or read observed_contexts.txt after Step 1 below).
 #   3. The canonical docs/00-Governance/branch_protection.json has
 #      `required_status_checks.contexts: []` -- this script's job is
@@ -103,33 +115,63 @@ gh api "repos/$REPO/branches/main/protection/required_status_checks" \
 echo "  current required contexts: $(python -c "import json; d=json.load(open('live_required_status_checks.json')); print(d.get('contexts', []))")"
 
 # To get the registered context names (the ones GitHub will accept
-# in the `contexts` list), we read from the checks endpoint of the
-# last few commits. As a pragmatic shortcut, we also accept
-# well-known names that match the workflow files. The orchestrator
-# should review the list before PUTing it.
-gh api "repos/$REPO/commits?per_page=10" \
+# in the `contexts` list and that the merge GraphQL gate matches
+# against), we read the **check_runs** for the latest commit on
+# `main`. The `check_runs` array on a commit is a GitHub check_run
+# (job-level), and the `name` field of a check_run is the job's
+# `name:` (e.g. `test + lint + build`), NOT the workflow's `name:`
+# (e.g. `ci-hello-world`).
+#
+# Why this matters: GitHub's `required_status_checks.contexts` array
+# is matched against `statusCheckRollup.contexts.nodes` in the
+# GraphQL merge gate. That rollup contains **check_run nodes** (job
+# names), not check_suite nodes (workflow names). Using workflow
+# names in `contexts` makes the API accept the PUT but the merge
+# then fails with "GraphQL: N of N required status checks are
+# expected (mergePullRequest)" — the rollup never has a node with
+# the workflow name, so the gate can never be satisfied.
+#
+# Why we read check-runs per-commit, not embedded in commits?per_page:
+# The embedded `check_runs` array on commits?per_page is **empty
+# under the OAuth-app `gh` credential** (the same scope that can
+# create PRs but not write `.github/workflows/*`). The dedicated
+# `commits/{sha}/check-runs` endpoint returns the job-level
+# check_run list regardless of credential, because the check_runs
+# primitive is on a different API surface than the contents API
+# that the OAuth-app scope blocks. Empirically verified 2026-07-27:
+# under the OAuth-app credential, `commits?per_page=10` returns
+# `check_runs: []` for every commit, while `commits/{sha}/check-runs`
+# returns the full list of completed check_runs.
+sha=$(gh api "repos/$REPO/commits/main" --jq '.sha')
+echo "  latest main SHA: $sha"
+gh api "repos/$REPO/commits/$sha/check-runs" \
     | python -c "
 import json, sys
-commits = json.load(sys.stdin)
-contexts = set()
-for c in commits:
-    for ch in c.get('check_runs', []):
-        contexts.add(ch['name'])
-print('\n'.join(sorted(contexts)))
+d = json.load(sys.stdin)
+contexts = sorted({c['name'] for c in d.get('check_runs', []) if c.get('name')})
+print('\n'.join(contexts))
 " > observed_contexts.txt
-echo "  observed check names from last 10 commits:"
+echo "  observed check_run names from latest commit:"
 sed 's/^/    /' observed_contexts.txt
 if [ ! -s observed_contexts.txt ]; then
-    echo "  WARN: no check names observed yet. The workflows may not have"
-    echo "  run on any commit. The contexts list will be empty until at"
-    echo "  least one push to main happens after the workflows land."
+    echo "  WARN: no check_run names observed yet. The workflows may"
+    echo "  not have run on any commit. The contexts list will be"
+    echo "  preserved from the canonical file (Step 2 below preserves"
+    echo "  existing entries) until at least one push to main happens"
+    echo "  after the workflows land and re-running this script."
 fi
 
 echo ""
 echo "=== Step 2: build the new canonical file ==="
 python <<PY
 import json
-canon = json.load(open("$CANON"))
+# CRITICAL: open with encoding='utf-8'. Python on Windows defaults
+# to cp1252 in text mode, which double-encodes the canonical's §
+# byte (UTF-8 c2 a7) as cp1252 chars 'Â' + '§' on read.
+# On write, json.dumps(ensure_ascii=False) then re-encodes those
+# two chars as 4 bytes (c3 82 c2 a7), mojibaking the §. Verified
+# 2026-07-27.
+canon = json.load(open("$CANON", encoding="utf-8"))
 observed = [l.strip() for l in open("observed_contexts.txt") if l.strip()]
 # Preserve the strict flag and the existing contexts list if it's
 # non-empty (in case this script is being re-run after a previous
@@ -140,7 +182,15 @@ canon["required_status_checks"] = {
     "strict": True,
     "contexts": merged,
 }
-json.dump(canon, open("$CANON", "w"), indent=2)
+# Write with explicit LF line endings. Python's json.dump on Windows
+# defaults to os.linesep (CRLF) which drifts from main's LF canonical
+# form, producing noisy diffs on the next commit (see pre-push-eol-preflight).
+# ensure_ascii=False preserves the literal UTF-8 § byte that the
+# canonical file uses (json.dumps with default ensure_ascii=True
+# escapes non-ASCII as Â§ instead of preserving the raw byte).
+out = json.dumps(canon, indent=2, ensure_ascii=False) + '\n'
+with open("$CANON", "w", encoding="utf-8", newline="") as f:
+    f.write(out)
 print(f"  new required_status_checks.contexts: {merged}")
 PY
 
@@ -148,7 +198,8 @@ echo ""
 echo "=== Step 3: PUT the rule back from the canonical file ==="
 python <<'PY'
 import json
-canon = json.load(open("docs/00-Governance/branch_protection.json"))
+# encoding='utf-8' on read AND write: same Windows-cp1252 trap as Step 2.
+canon = json.load(open("docs/00-Governance/branch_protection.json", encoding="utf-8"))
 put_body = {
     "required_status_checks": canon["required_status_checks"],
     "enforce_admins": canon["enforce_admins"],
@@ -162,7 +213,8 @@ put_body = {
     "lock_branch": canon["lock_branch"],
     "allow_fork_syncing": canon["allow_fork_syncing"],
 }
-json.dump(put_body, open("put_body.json", "w"), indent=2)
+with open("put_body.json", "w", encoding="utf-8") as f:
+    json.dump(put_body, f, indent=2, ensure_ascii=False)
 PY
 
 put_attempt=1
@@ -208,8 +260,8 @@ def normalize(o):
 
 # Compare the post-PUT live state against the canonical file (which
 # is what we just PUT).
-canon = json.load(open("docs/00-Governance/branch_protection.json"))
-post = normalize(json.load(open("post_protection.json")))
+canon = json.load(open("docs/00-Governance/branch_protection.json", encoding="utf-8"))
+post = normalize(json.load(open("post_protection.json", encoding="utf-8")))
 post.pop("required_signatures", None)
 
 # Build the "expected" post-state from the canonical file.
