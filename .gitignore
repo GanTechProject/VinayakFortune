@@ -77,3 +77,25 @@ $RECYCLE.BIN/
 /delete_reviews*.json
 /merge_pr[0-9]*.json
 !/merge_pr*_audit.json
+
+# Local dev tool artifacts (2026-07-27 cleanup)
+# These are environment-specific dev inputs, NOT project sources.
+# Per the conductor's autonomy directive (2026-07-27), the orchestrator
+# resolved the noise-vs-signal classification for these.
+
+# Claude Code session infrastructure (project-local copy)
+/.claude/settings.local.json
+/.claude/worktrees/
+
+# Cursor AI rules — Cursor-specific, not Claude Code, not this repo
+/.cursorrules
+
+# Wizard mode cache — regenerable on next run
+/.wizard_cache_*.md
+
+# better-ctx tool-preference doc — Cursor/Claude tool config, not a project doc
+/AGENTS.md
+
+# Vendored third-party tools at the project root (not part of the monorepo)
+/betterctx-client/
+/zap/
