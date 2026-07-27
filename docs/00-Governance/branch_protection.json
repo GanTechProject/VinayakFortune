@@ -57,7 +57,10 @@
   ],
   "required_status_checks": {
     "strict": true,
-    "contexts": []
+    "contexts": [
+      "test + lint + build",
+      "docs structure + cross-refs"
+    ]
   },
   "enforce_admins": true,
   "required_pull_request_reviews": {
@@ -75,4 +78,3 @@
   "lock_branch": false,
   "allow_fork_syncing": false
 }
-
