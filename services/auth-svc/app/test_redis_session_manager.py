@@ -23,20 +23,19 @@ the per-test contract.
 from __future__ import annotations
 
 import threading
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 
+from app.redis_session_manager import RedisSessionManager
 from app.session_manager import (
     ABSOLUTE_TTL,
     IDLE_TTL,
     Session,
     SessionManager,
 )
-from app.redis_session_manager import RedisSessionManager
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -47,7 +46,7 @@ class FakeClock:
     """A deterministic clock for tests. Manual advance only — no real time."""
 
     def __init__(self, start: datetime | None = None) -> None:
-        self._now = start or datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        self._now = start or datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
 
     def __call__(self) -> datetime:
         return self._now
@@ -409,14 +408,7 @@ def test_concurrent_revoke_and_get(redis_manager: SessionManager) -> None:
     n_threads = 20
     barrier = threading.Barrier(n_threads)
 
-    def worker() -> None:
-        barrier.wait()
-        if thread_local := getattr(worker, "_i", None) is None:
-            pass
-        # Half threads revoke, half get
-        # (the dispatch is on thread index, set in the loop below)
-
-    # Simpler approach: pre-assign roles
+    # Pre-assign roles per thread (one revoker, the rest getters).
     def revoker() -> None:
         barrier.wait()
         redis_manager.revoke_session(s.session_id)
