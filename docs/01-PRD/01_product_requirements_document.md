@@ -789,6 +789,34 @@ This appendix is the **quantitative traceability matrix** between the requiremen
 | v0.5 | 2026-07-20 | Doc Team | All 15 chapters drafted |
 | v1.0 | 2026-07-20 | Doc Team | First approved version |
 | v1.1 | 2026-07-20 | Doc Team | §1.3 "At a glance" metrics reconciled to verifiable counts (115 REQ + 35 FEAT + 12 US + 115 AC + 10 KPI; closes C-2 in the drift report). §15.3 Appendix B upgraded from a coverage declaration to a quantitative traceability matrix with honest "0 of N — pending v1.2" disclosure for the empty downstream-citation status (closes C-1 in the drift report). Reverse-direction broken reference `REQ-AUTH-0012` in Document 21 noted for v1.2 reconciliation. |
+| v1.2 | 2026-07-28 | Doc Team | §15.5 Lifecycle added: explicit state chain (discovery → validation → scoring → reported → archived) for opportunity-svc (issue #15). Closes the doc-citation drift surfaced by the 2026-07-27 campaign. |
+
+### 15.5 Lifecycle — Opportunity state chain
+
+The opportunity record (REQ-PLAT-0007, REQ-PLAT-0008) progresses through the following states. Each transition is a state-machine-enforced change owned by opportunity-svc (issue #15, AC-15.4). Invalid transitions return 409 Conflict.
+
+| State | Source | Required conditions |
+|---|---|---|
+| `candidate` | Discovery planner (AGT-DISC-PLANNER) emits a DiscoveryHit that meets the minimum-signal threshold | AGT-DISC-CLUSTER has produced a CandidateOpportunity |
+| `validating` | Validation-pipeline run is created (issue #11) | One or more REQ-VAL-* ACs in flight |
+| `scored` | Scoring-svc produces a score (issue #13) | The score is bound to the opportunity via `opportunity.score_breakdown` |
+| `reported` | Reporting-svc produces a report (issue #12) | The report is bound to the opportunity via `opportunity.report_id` |
+| `archived` | Operator action or 90-day inactivity since `reported_at` | Soft-delete only; the row stays in `opportunity` with `archived_at` set |
+
+**Lifecycle invariants:**
+
+- Transitions are unidirectional except for `archived` → `candidate`, which is forbidden (an archived opportunity that is later re-discovered creates a new `candidate` row referencing the prior via `opportunity.parent_id`).
+- A `candidate` that fails validation stays at `candidate` with `validation_failure_count` incremented; it does NOT advance to `validating` again until the failure is resolved.
+- `scored` and `reported` are sticky: once an opportunity has been scored, it cannot regress to `validating`. The score remains on the record even if re-validation occurs.
+- Every transition emits a CloudEvent (`com.ventureminer.opportunity.<state>`) on NATS JetStream (Doc 02 §4.2), which is the input to event sourcing (REQ-PLAT-0008, AC-15.3).
+
+**Cross-references:**
+
+- Issue #15 (opportunity-svc) — implements the lifecycle state machine
+- Issue #11 (validation-pipeline) — owns the `validating` transition
+- Issue #13 (scoring-svc) — owns the `scored` transition
+- Issue #12 (reporting-svc) — owns the `reported` transition
+- Document 02 (TRD) §4.1 (opportunity-svc service catalog), §4.2 (CloudEvents 1.0)
 
 ---
 
