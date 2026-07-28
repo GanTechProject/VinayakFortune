@@ -17,7 +17,7 @@ from __future__ import annotations
 import threading
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 
@@ -383,14 +383,7 @@ def test_concurrent_revoke_and_get(manager: SessionManager) -> None:
     n_threads = 20
     barrier = threading.Barrier(n_threads)
 
-    def worker() -> None:
-        barrier.wait()
-        if thread_local := getattr(worker, "_i", None) is None:
-            pass
-        # Half threads revoke, half get
-        # (the dispatch is on thread index, set in the loop below)
-
-    # Simpler approach: pre-assign roles
+    # Pre-assign roles per thread (one revoker, the rest getters).
     def revoker() -> None:
         barrier.wait()
         manager.revoke_session(s.session_id)
