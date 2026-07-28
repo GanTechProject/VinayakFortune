@@ -1,0 +1,86 @@
+{
+  "pr": 52,
+  "branch": "chore/gitignore-tool-artifacts",
+  "base": "main",
+  "head_sha": "407e9dd",
+  "head_sha_initial": "407e9dd",
+  "rebase": null,
+  "push": {
+    "remote_head_before_push": "(branch did not exist on remote)",
+    "first_push": "407e9dd:refs/heads/chore/gitignore-tool-artifacts (new branch)"
+  },
+  "title": "chore(.gitignore): exclude local dev tool artifacts (Claude Code, Cursor, wizard, vendored tools)",
+  "path": "Path 1 (required_approving_review_count: 0 is live on main since PR #42)",
+  "deletes": 0,
+  "url": "https://github.com/GanTechProject/VinayakFortune/pull/52",
+  "preconditions": [
+    {
+      "check": "branch was clean ahead of remote by exactly 1 commit on first push (after audit commit)",
+      "result": "PASS",
+      "evidence": "git ls-remote origin chore/gitignore-tool-artifacts (pre-push) returned nothing; branch forked off local main @ 1cf579c (audit already committed); +1 commit (407e9dd) for the .gitignore change"
+    },
+    {
+      "check": "no duplicate PR for this branch",
+      "result": "PASS",
+      "evidence": "gh pr list --state all --head chore/gitignore-tool-artifacts → empty"
+    },
+    {
+      "check": "PR targets main (not another feature branch)",
+      "result": "PASS",
+      "evidence": "gh pr create --base main --head chore/gitignore-tool-artifacts"
+    },
+    {
+      "check": "PR title uses chore(.gitignore): conventional-commit prefix",
+      "result": "PASS",
+      "evidence": "title='chore(.gitignore): exclude local dev tool artifacts (Claude Code, Cursor, wizard, vendored tools)'"
+    },
+    {
+      "check": "EOL preflight on .gitignore (CRLF=0, LF-only)",
+      "result": "PASS",
+      "evidence": "tr -cd '\\r' < .gitignore | wc -c → 0; tail -c 1 → \\n"
+    },
+    {
+      "check": "All 7 gitignore paths verified to exist in working tree",
+      "result": "PASS",
+      "evidence": "for-loop over the 7 paths → all EXIST"
+    },
+    {
+      "check": "git check-ignore confirms all 7 paths now ignored",
+      "result": "PASS",
+      "evidence": "git check-ignore -v .claude/settings.local.json .claude/worktrees .cursorrules .wizard_cache_architect_phase_c_step2.md AGENTS.md betterctx-client zap → 7 lines, one per path"
+    },
+    {
+      "check": "No tracked file references any ignored path",
+      "result": "PASS",
+      "evidence": "git ls-files | xargs grep -l -E '(\\.cursorrules|\\.wizard_cache|AGENTS\\.md|betterctx-client|/zap/|\\.claude/settings\\.local\\.json)' → only .gitignore itself (which is correct, the rule lives there)"
+    },
+    {
+      "check": "PR body has no AI-attribution trailer (project rule)",
+      "result": "PASS",
+      "evidence": "gh pr edit 52 body confirmed clean: no Co-Authored-By / Generated with line"
+    },
+    {
+      "check": "branch protection accepts the new HEAD (Path 1 + 2 required status checks)",
+      "result": "PASS",
+      "evidence": "gh pr checks 52 → 'test + lint + build' PASS (24s) + 'docs structure + cross-refs' PASS (4s); MERGEABLE=true; no conflicts"
+    }
+  ],
+  "deletes_applied": [],
+  "merge_command": "gh pr merge 52 --squash (executed by human/conductor)",
+  "merge_owner": "human (conductor)",
+  "notes": [
+    "Band-1 housekeeping change: 7 categories of local-only tool artifacts now ignored by .gitignore. None are project sources; all are environment-specific dev inputs that were either previously tracked by accident (e.g. /AGENTS.md, /.wizard_cache_*.md) or are regenerable (e.g. /betterctx-client/, /zap/ which are vendored tools at the project root).",
+    "Sacred files preserved: app/session_manager.py and app/test_session_manager.py untouched on main (verified via git diff main@3198c79 main@e92c1e6 -- services/auth-svc/app/session_manager.py services/auth-svc/app/test_session_manager.py → empty diff). Last touched at 4a0ea1a (PR #49).",
+    "Squash-merge bundled 2 local commits (1cf579c audit + 407e9dd gitignore) into 1 squash commit (3198c79) on main. Both files landed together; the substantive change is the .gitignore, the audit is incidental and aligned with the cycle-artifacts convention archived by PR #51.",
+    "What did NOT change: live branch protection still has 2 required status checks ('test + lint + build' + 'docs structure + cross-refs'). The test-auth-svc workflow paste is still pending the conductor's human-side action (OAuth scope block). Once that PR (#53+) lands and merges, a separate ingest will register the new context.",
+    "The .gitignore modification was originally made in the prior turn's local-dev hygiene pass but deliberately deferred under the conductor-decides-on-commit discipline. After PR #51 closed, the depth band was empty and the .gitignore change was the cleanest Band-1 housekeeping item — no architect input needed, low risk, structurally safe. The orchestrator advanced it under the autonomy directive."
+  ],
+  "related_memories": [
+    "path-1-live-2026-07-27",
+    "oauth-workflow-scope-block",
+    "tracker-hygiene-is-ongoing",
+    "claude-code-memory-system",
+    "pr51-archive-cycle-artifacts-2026-07-27",
+    "empty-cohort-dont-fabricate"
+  ]
+}
