@@ -1,0 +1,20 @@
+# CODEOWNERS — auto-assigns reviewers on every PR.
+# Syntax: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# The last matching pattern wins; more-specific rules go BELOW less-specific ones.
+
+# Default owner for the whole repo (fallback when no more-specific match)
+*                                       @GanTechProject
+
+# Documentation
+/docs/                                  @GanTechProject
+
+# Service surfaces
+/services/auth-svc/                     @GanTechProject
+/services/hello-world/                  @GanTechProject
+
+# CI / GitHub-side files
+/.github/workflows/                     @GanTechProject
+
+# Branch-protection: CODEOWNERS requests are required on PRs that touch the
+# following files. The repo is solo, so @GanTechProject is the universal owner;
+# when additional collaborators are added, split these rows by team handle.
