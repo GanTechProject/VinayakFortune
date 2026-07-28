@@ -51,7 +51,6 @@ from app.session_manager import (
     SessionManager,
 )
 
-
 # Storage key prefix (single Redis instance can be shared in dev).
 _KEY_PREFIX = "auth_svc:"
 _SESSION_KEY = _KEY_PREFIX + "session:"

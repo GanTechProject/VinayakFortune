@@ -10,12 +10,11 @@ import abc
 import logging
 import threading
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Any, Callable
+from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-
 
 IDLE_TTL: timedelta = timedelta(hours=8)
 ABSOLUTE_TTL: timedelta = timedelta(days=30)
@@ -33,7 +32,7 @@ class Session(BaseModel):
 
 
 def _default_clock() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _default_audit_sink(event_code: str, payload: dict[str, Any]) -> None:
