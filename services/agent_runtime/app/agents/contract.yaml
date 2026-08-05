@@ -1,0 +1,27 @@
+# Per Doc 09 §2 L50-71 — per-agent YAML contract.
+# This is the bootstrap contract for the 17 agents (Doc 09 §20.1). The
+# production implementation loads one file per agent ID from `agents/<id>/`.
+# Mismatch between YAML and Python node signature is a startup error
+# (Architect #6 §3).
+agent:
+  id: AGT-ORCH
+  name: Orchestrator
+  purpose: Top-level dispatcher for the multi-agent graph.
+inputs:
+  - RunRequest{goal, depth, workspace_id, user_id}
+outputs:
+  - RunState
+tools: []
+dependencies:
+  - rag-svc
+  - plugin-svc
+  - source-svc
+failure_modes:
+  - budget_exceeded
+  - verifier_2strike
+  - provider_unavailable
+success_criteria:
+  - run_state populated
+  - evidence list non-empty
+test_plan:
+  - tests/integration/test_orchestrator.py
