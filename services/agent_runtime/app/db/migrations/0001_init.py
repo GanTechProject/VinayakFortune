@@ -8,15 +8,14 @@ from __future__ import annotations
 from services.agent_runtime.app.db.schema import ALL_DDL
 
 
-def upgrade() -> None:
+def upgrade(execute) -> None:
     """Apply the schema DDL in order.
 
-    Idempotent: uses CREATE TABLE IF NOT EXISTS / CREATE INDEX IF NOT EXISTS.
+    execute: callable that accepts a DDL string and executes it.
+    Idempotent: uses CREATE SCHEMA IF NOT EXISTS / CREATE TABLE IF NOT EXISTS / CREATE INDEX IF NOT EXISTS.
     """
     for ddl in ALL_DDL:
-        # The actual DB connection is injected at runtime; this is the
-        # declaration only. The applied DDL is the same string.
-        _ = ddl
+        execute(ddl)
 
 
 def downgrade() -> None:

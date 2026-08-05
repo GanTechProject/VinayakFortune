@@ -59,8 +59,18 @@ services/agent-runtime/
 pip install -e ".[dev]"
 pytest tests/
 
-# Run the service
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Run the service (from the monorepo root — the `services` package must be importable)
+uvicorn services.agent_runtime.app.main:app --host 0.0.0.0 --port 8000
+```
+
+## Docker
+
+The Dockerfile uses the **monorepo root** as its build context (the service
+imports the shared `services.*` contract packages), so build it from the root:
+
+```bash
+docker build -f services/agent_runtime/Dockerfile -t agent-runtime .
+docker run -p 8000:8000 agent-runtime
 ```
 
 ## See also

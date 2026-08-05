@@ -7,7 +7,6 @@ tool without going through MCP (Doc 07 §7.3 L176).
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -155,13 +154,12 @@ class MCPGateway:
             )
 
         # 3. Per-call PII policy
-        for v in input.values():
-            if isinstance(v, str) and detect_pii(v):
-                raise PolicyViolation(
-                    code="pii_policy_violation",
-                    message="input contains PII; rejected before external egress",
-                    retry_after_s=None,
-                )
+        if _contains_pii(input):
+            raise PolicyViolation(
+                code="pii_policy_violation",
+                message="input contains PII; rejected before external egress",
+                retry_after_s=None,
+            )
 
         # 4. Rate limit
         if not self.rate_limiter.allow(tool_id, str(ctx.workspace_id), str(ctx.run_id)):
@@ -195,10 +193,15 @@ class MCPGateway:
         )
 
 
-# Compile a regex once at import time for the test "in-process string check".
-_PII_EMAIL_RE = re.compile(
-    r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
-)
+def _contains_pii(value: Any) -> bool:
+    """Recursively check for PII in any JSON-serializable value."""
+    if isinstance(value, str):
+        return detect_pii(value)
+    if isinstance(value, dict):
+        return any(_contains_pii(v) for v in value.values())
+    if isinstance(value, (list, tuple, set)):
+        return any(_contains_pii(v) for v in value)
+    return False
 
 
 __all__ = [

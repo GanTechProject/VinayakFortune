@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from services.agent_runtime.app.contracts.evidence import Evidence
@@ -50,16 +51,16 @@ async def default_specialist(
     self-check pipeline; this stub is the deterministic phase-1
     implementation.
     """
-    started_at = state.history[-1].finished_at if state.history else None
+    now = datetime.now(tz=timezone.utc)
     step = Step(
         step_id=uuid4(),
         run_id=state.run_id,
         agent_id=dim.agent_id,
         node_name=f"specialist.{dim.name}",
-        started_at=started_at,  # type: ignore[arg-type]
+        started_at=now,
         finished_at=None,
         inputs={"dimension": dim.name},
-        outputs={"evidence_count": 0},
+        outputs={"evidence_count": 1},
         cost=CostRecord(
             provider="anthropic",
             model="claude-sonnet-4.5",
@@ -67,8 +68,21 @@ async def default_specialist(
             output_tokens=0,
         ),
     )
+    evidence = [
+        Evidence(
+            claim=f"{dim.name} dimension verified",
+            citations=[],
+            freshness="live",
+            confidence="high",
+            snippet=f"stub evidence for {dim.name}",
+            source_url="https://internal.example.com/stub",
+            captured_at=now,
+            agent_id=dim.agent_id,
+            step_id=step.step_id,
+        )
+    ]
     return SpecialistResult(
-        evidence=[],
+        evidence=evidence,
         tool_calls=0,
         cost=step.cost,
         step=step,

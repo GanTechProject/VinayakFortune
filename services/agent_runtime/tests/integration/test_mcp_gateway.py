@@ -83,6 +83,38 @@ async def test_mcp_gateway_enforces_per_call_pii_policy() -> None:
 
 
 @pytest.mark.asyncio
+async def test_mcp_gateway_rejects_nested_pii() -> None:
+    """Bugfix E: PII inside a nested dict is rejected before external egress."""
+    gw = MCPGateway(
+        agent_id="AGT-RSRCH-MARKET",
+        registry=StaticToolRegistry([_manifest()]),
+    )
+    with pytest.raises(PolicyViolation) as ei:
+        await gw.call(
+            tool_id="T-MARKET-DATA-FETCHER",
+            input={"nested": {"email": "user@example.com"}},
+            ctx=_ctx(),
+        )
+    assert ei.value.code == "pii_policy_violation"
+
+
+@pytest.mark.asyncio
+async def test_mcp_gateway_rejects_pii_in_list() -> None:
+    """Bugfix E: PII inside a list element is rejected before external egress."""
+    gw = MCPGateway(
+        agent_id="AGT-RSRCH-MARKET",
+        registry=StaticToolRegistry([_manifest()]),
+    )
+    with pytest.raises(PolicyViolation) as ei:
+        await gw.call(
+            tool_id="T-MARKET-DATA-FETCHER",
+            input={"items": ["not pii", "user@example.com"]},
+            ctx=_ctx(),
+        )
+    assert ei.value.code == "pii_policy_violation"
+
+
+@pytest.mark.asyncio
 async def test_mcp_gateway_enforces_workspace_allow_deny() -> None:
     """Per Architect #6 §13 test_021: per-workspace allow/deny."""
     class DenyPolicy:

@@ -70,7 +70,13 @@ class ProviderHealth:
         }
 
     def record(self, provider: Provider, success: bool) -> None:
-        self._events[provider].append((datetime.now(tz=timezone.utc), success))
+        now = datetime.now(tz=timezone.utc)
+        self._events[provider].append((now, success))
+        # Prune events older than the window to bound memory.
+        cutoff = now - timedelta(seconds=self.window_s)
+        self._events[provider] = [
+            e for e in self._events[provider] if e[0] >= cutoff
+        ]
 
     def status(self, provider: Provider) -> ProviderStatus:
         now = datetime.now(tz=timezone.utc)
@@ -97,17 +103,29 @@ def route_model(
 ) -> ModelChoice:
     """Per-call routing decision (Doc 07 §7.2 L162-171).
 
-    Q-6.5 thresholds:
-    - rubric_weight >= 0.8 AND anthropic.opus_ok → Opus 4
+    Q-6.5 thresholds (checked in this order):
+    - anthropic down → GPT-4o fallback (fast-lane and Opus are gated on anthropic up)
     - latency_budget_ms < 5000 OR cost_remaining_usd < 0.05 → Sonnet 4.5 fast lane
-    - anthropic down → GPT-4o fallback
+    - rubric_weight >= 0.8 AND anthropic.opus_ok → Opus 4
     - default → Sonnet 4.5
     """
     health = provider_health or {p: DEFAULT_HEALTH.status(p) for p in Provider}
     anthropic_status = health.get(Provider.ANTHROPIC) or DEFAULT_HEALTH.status(Provider.ANTHROPIC)
     openai_status = health.get(Provider.OPENAI) or DEFAULT_HEALTH.status(Provider.OPENAI)
 
-    # Fast lane: low latency OR low cost remaining
+    # Anthropic down → GPT-4o fallback (checked BEFORE the fast lane so a
+    # dead provider never receives a fast-lane call).
+    if not anthropic_status.ok:
+        if not openai_status.ok:
+            raise ProviderUnavailableError("both providers down")
+        return ModelChoice(
+            provider=Provider.OPENAI,
+            model_id="gpt-4o",
+            max_tokens=4096,
+            temperature=0.3,
+        )
+
+    # Fast lane: low latency OR low cost remaining (anthropic is up here)
     if latency_budget_ms < 5000 or cost_remaining_usd < Decimal("0.05"):
         return ModelChoice(
             provider=Provider.ANTHROPIC,
@@ -117,21 +135,10 @@ def route_model(
         )
 
     # High-stakes: rubric_weight >= 0.8 AND anthropic Opus OK
-    if rubric_weight >= 0.8 and anthropic_status.ok and anthropic_status.opus_ok:
+    if rubric_weight >= 0.8 and anthropic_status.opus_ok:
         return ModelChoice(
             provider=Provider.ANTHROPIC,
             model_id="claude-opus-4",
-            max_tokens=4096,
-            temperature=0.3,
-        )
-
-    # Anthropic down → GPT-4o fallback
-    if not anthropic_status.ok:
-        if not openai_status.ok:
-            raise ProviderUnavailableError("both providers down")
-        return ModelChoice(
-            provider=Provider.OPENAI,
-            model_id="gpt-4o",
             max_tokens=4096,
             temperature=0.3,
         )

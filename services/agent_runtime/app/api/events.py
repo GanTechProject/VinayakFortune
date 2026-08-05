@@ -16,7 +16,12 @@ from fastapi import APIRouter, HTTPException, Response, status
 from pydantic import BaseModel
 
 from services.agent_runtime.app.contracts.budget import RunType, budget_for_run_type
-from services.agent_runtime.app.contracts.plan import DiscoveryPlan
+from services.agent_runtime.app.contracts.plan import (
+    DiscoveryPlan,
+    Plan,
+    ReportPlan,
+    ValidationPlan,
+)
 from services.agent_runtime.app.contracts.run_state import RunState
 
 router = APIRouter()
@@ -33,7 +38,7 @@ class RunRequest(BaseModel):
     workspace_id: UUID
     user_id: UUID
     run_type: RunType = RunType.VALIDATION_STANDARD
-    plan: DiscoveryPlan | None = None
+    plan: Plan | None = None
 
 
 class RunResponse(BaseModel):
@@ -56,7 +61,15 @@ class RunResponse(BaseModel):
 async def create_run(req: RunRequest) -> RunResponse:
     """Start a new agent run (Doc 09 §3)."""
     if req.plan is None:
-        req.plan = DiscoveryPlan(sources=[], queries=[req.goal], expected_yield=10)
+        # Derive the plan variant from the run type so the plan matches the
+        # budget/run semantics (BUG F). Explicit plans always win.
+        rt = req.run_type
+        if rt.value.startswith("validation_"):
+            req.plan = ValidationPlan(dimensions=[], rubric_version="v1.0")
+        elif rt in (RunType.FULL_REPORT, RunType.COMPARISON_REPORT):
+            req.plan = ReportPlan(template_id="default", sections=[])
+        else:
+            req.plan = DiscoveryPlan(sources=[], queries=[req.goal], expected_yield=10)
     state = RunState(
         run_id=uuid4(),
         workspace_id=req.workspace_id,
@@ -70,19 +83,23 @@ async def create_run(req: RunRequest) -> RunResponse:
 
 
 @router.get("/runs/{run_id}", response_model=RunState)
-async def get_run(run_id: UUID) -> RunState:
-    """Fetch the current RunState."""
+async def get_run(run_id: UUID, workspace_id: UUID) -> RunState:
+    """Fetch the current RunState, scoped to the caller's workspace (BUG G).
+
+    Tenant isolation: a run owned by another workspace is indistinguishable
+    from a missing run (404) so existence is not leaked.
+    """
     state = _RUN_STORE.get(run_id)
-    if state is None:
+    if state is None or state.workspace_id != workspace_id:
         raise HTTPException(status_code=404, detail=f"run {run_id} not found")
     return state
 
 
 @router.delete("/runs/{run_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
-async def cancel_run(run_id: UUID) -> Response:
-    """Cancel a running run."""
+async def cancel_run(run_id: UUID, workspace_id: UUID) -> Response:
+    """Cancel a running run, scoped to the caller's workspace (BUG G)."""
     state = _RUN_STORE.get(run_id)
-    if state is None:
+    if state is None or state.workspace_id != workspace_id:
         raise HTTPException(status_code=404, detail=f"run {run_id} not found")
     # The orchestrator picks up the cancel on the next node boundary.
     _RUN_STORE.pop(run_id, None)
@@ -91,8 +108,8 @@ async def cancel_run(run_id: UUID) -> Response:
 
 @router.get("/healthz")
 async def healthz() -> dict[str, str]:
-    """Liveness probe (Doc 08 §6 L139)."""
-    return {"status": "ok", "service": "agent-runtime"}
+    """Liveness probe (Doc 08 §6 L139). Canonical body {"status":"ok"}."""
+    return {"status": "ok"}
 
 
 __all__ = ["RunRequest", "RunResponse", "router"]

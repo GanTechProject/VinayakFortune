@@ -74,6 +74,24 @@ def test_routing_anthropic_down_routes_to_gpt4o_fallback() -> None:
     assert choice.model_id == "gpt-4o"
 
 
+def test_routing_anthropic_down_low_latency_routes_to_fallback() -> None:
+    """Bugfix B: anthropic-down must win over the fast lane (latency/cost)."""
+    health = {
+        Provider.ANTHROPIC: ProviderStatus(ok=False, opus_ok=False),
+        Provider.OPENAI: ProviderStatus(ok=True),
+    }
+    choice = route_model(
+        node_name="retrieve",
+        rubric_weight=0.5,
+        latency_budget_ms=2000,
+        cost_remaining_usd=Decimal("1.00"),
+        provider_health=health,
+    )
+    assert choice.is_fallback is True
+    assert choice.provider == Provider.OPENAI
+    assert choice.model_id == "gpt-4o"
+
+
 def test_routing_both_providers_down_raises_provider_unavailable() -> None:
     """Per Doc 08 §8 L160: two providers down → abort."""
     health = {

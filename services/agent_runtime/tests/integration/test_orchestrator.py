@@ -2,18 +2,28 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
 
-from services.agent_runtime.app.contracts.budget import RunType, budget_for_run_type
+from services.agent_runtime.app.contracts.budget import (
+    Budget,
+    RunType,
+    budget_for_run_type,
+)
 from services.agent_runtime.app.contracts.evidence import Evidence
 from services.agent_runtime.app.contracts.plan import DiscoveryPlan
 from services.agent_runtime.app.contracts.run_state import RunState
 from services.agent_runtime.app.contracts.step import CostRecord, Step
 from services.agent_runtime.app.workflows.orchestrator import Orchestrator
-from services.agent_runtime.app.workflows.specialists import Dimension, SpecialistResult
+from services.agent_runtime.app.workflows.specialists import (
+    Dimension,
+    SpecialistResult,
+    default_specialist,
+)
 
 
 def _new_state() -> RunState:
@@ -123,3 +133,52 @@ async def test_orchestrator_returns_budget_exhausted_when_over_budget() -> None:
     orch = Orchestrator(specialist_fn=specialist)
     result = await orch.run(state=state, dimensions=dims)
     assert result.budget_exhausted is True
+
+
+@pytest.mark.asyncio
+async def test_orchestrator_wall_clock_budget_exceeded() -> None:
+    """Bugfix D: _check_budget enforces wall-clock; wall_clock_s=0 fails any run."""
+    state = RunState(
+        workspace_id=uuid4(),
+        user_id=uuid4(),
+        goal="test",
+        plan=DiscoveryPlan(sources=[], queries=["q"], expected_yield=10),
+        budget=Budget(
+            tokens=99_999_999,
+            wall_clock_s=0,
+            tool_calls=9_999_999,
+            cost_usd=Decimal("9999"),
+        ),
+    )
+    dims = [Dimension(name="market", agent_id="AGT-RSRCH-MARKET")]
+
+    async def slow_specialist(state: RunState, dim: Dimension) -> SpecialistResult:
+        await asyncio.sleep(0.01)
+        step = Step(
+            step_id=uuid4(),
+            run_id=state.run_id,
+            agent_id=dim.agent_id,
+            node_name=f"specialist.{dim.name}",
+            started_at=datetime(2026, 7, 28, tzinfo=timezone.utc),
+            cost=CostRecord(provider="anthropic", model="claude-sonnet-4.5"),
+        )
+        return SpecialistResult(evidence=[], tool_calls=0, cost=step.cost, step=step)
+
+    orch = Orchestrator(specialist_fn=slow_specialist)
+    result = await orch.run(state=state, dimensions=dims)
+    assert result.budget_exhausted is True
+
+
+@pytest.mark.asyncio
+async def test_default_specialist_produces_nonempty_result() -> None:
+    """Bugfix A: the fixed default_specialist yields evidence and no unverified dims."""
+    state = _new_state()
+    dims = [
+        Dimension(name="market", agent_id="AGT-RSRCH-MARKET"),
+        Dimension(name="comp", agent_id="AGT-RSRCH-COMP"),
+    ]
+    orch = Orchestrator(specialist_fn=default_specialist)
+    result = await orch.run(state=state, dimensions=dims)
+    assert result.unverified_dimensions == []
+    assert len(state.evidence) == 2
+    assert len(state.history) == 2

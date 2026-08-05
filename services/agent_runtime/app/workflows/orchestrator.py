@@ -13,6 +13,7 @@ node mark the dimension unverified (Doc 15 §7 L94).
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from services.agent_runtime.app.contracts.budget import BudgetExceededError
 from services.agent_runtime.app.contracts.run_state import RunState
@@ -61,11 +62,12 @@ class Orchestrator:
         """
         verifier = VerifierState(strikes={})
         unverified: list[str] = []
+        started_at = datetime.now(tz=timezone.utc)
 
         # Per-specialist dispatch
         for dim in dimensions:
             try:
-                self._check_budget(state)
+                self._check_budget(state, started_at)
             except BudgetExceededError:
                 return OrchestratorResult(
                     state=state, unverified_dimensions=unverified, budget_exhausted=True
@@ -106,14 +108,18 @@ class Orchestrator:
             state=state, unverified_dimensions=unverified, budget_exhausted=False
         )
 
-    def _check_budget(self, state: RunState) -> None:
-        """Pre-node budget check (Doc 08 §9 L175)."""
-        # The orchestrator checks budget BEFORE every node invocation.
-        # For the skeleton, we only check the wall-clock fraction; the
-        # token, tool, and cost gates are enforced by the MCP gateway.
-        spent = sum(s.cost.total_tokens for s in state.history)
-        if not state.budget.has_tokens_remaining(spent):
-            raise BudgetExceededError("tokens", spent, state.budget.tokens)
+    def _check_budget(self, state: RunState, started_at: datetime) -> None:
+        """Pre-node budget check (Doc 08 §9 L175).
+
+        Enforces the token budget and the wall-clock budget. The MCP
+        gateway independently enforces tool_calls and cost_usd.
+        """
+        spent_tokens = sum(s.cost.total_tokens for s in state.history)
+        if not state.budget.has_tokens_remaining(spent_tokens):
+            raise BudgetExceededError("tokens", spent_tokens, state.budget.tokens)
+        elapsed_s = int((datetime.now(tz=timezone.utc) - started_at).total_seconds())
+        if not state.budget.has_wall_clock_remaining(elapsed_s):
+            raise BudgetExceededError("wall_clock", elapsed_s, state.budget.wall_clock_s)
 
 
 __all__ = ["Orchestrator", "OrchestratorResult"]

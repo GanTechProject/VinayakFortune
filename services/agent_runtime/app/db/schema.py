@@ -13,6 +13,8 @@ from __future__ import annotations
 # DDL for the agent schema. Postgres-flavoured (no pgvector here).
 # The actual DDL applied via Alembic migrations in `migrations/`.
 
+DDL_CREATE_SCHEMA = "CREATE SCHEMA IF NOT EXISTS agent;"
+
 DDL_AGENT_RUN = """
 CREATE TABLE IF NOT EXISTS agent.agent_run (
     run_id        UUID PRIMARY KEY,
@@ -71,10 +73,17 @@ CREATE INDEX IF NOT EXISTS agent_tool_call_tool_idx ON agent.agent_tool_call(too
 """
 
 ALL_DDL: tuple[str, ...] = (
+    DDL_CREATE_SCHEMA,
     DDL_AGENT_RUN,
     DDL_AGENT_STEP,
     DDL_AGENT_TOOL_CALL,
 )
 
 
-__all__ = ["ALL_DDL", "DDL_AGENT_RUN", "DDL_AGENT_STEP", "DDL_AGENT_TOOL_CALL"]
+__all__ = [
+    "ALL_DDL",
+    "DDL_AGENT_RUN",
+    "DDL_AGENT_STEP",
+    "DDL_AGENT_TOOL_CALL",
+    "DDL_CREATE_SCHEMA",
+]

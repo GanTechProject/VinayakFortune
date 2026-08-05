@@ -33,4 +33,4 @@ minversion = "8.3"
 testpaths = ["tests", "app"]
 addopts = "-v --strict-markers"
 asyncio_mode = "auto"
-pythonpath = ["..", "..", "../..", "C:/Users/Ganesha/Desktop/Super Agent/ProjectSAAS"]
+pythonpath = ["..", "../.."]
